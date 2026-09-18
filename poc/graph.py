@@ -110,8 +110,7 @@ class Graph:
             # -- END -- some manual commands
 
             try:
-                self.add_node(prompt)
-                reply_txt = self._nodes[self._current_ID].reply_txt
+                reply_txt = self.add_node(prompt)
                 print(f"\nNode [{self._current_ID}], Grok: {reply_txt}")
             except KeyboardInterrupt:
                 break
@@ -140,6 +139,7 @@ class Graph:
                 self._parents[node.id] = [self._current_ID]
 
         self._current_ID = node.id
+        return node.reply_txt
 
     def set_current_ID(self, target_ID):
         if target_ID not in self._nodes:
@@ -159,9 +159,18 @@ class Graph:
         self._current_ID = target_ID
         self.llm_core = xai_core.xAI_Core(messages)
 
+    def get_node_txt(self, node_ID):
+        if node_ID not in self._nodes:
+            raise GraphError(f"Node with ID = [{node_ID}] is not in graph.")
+        return self._nodes[node_ID].user_txt, self._nodes[node_ID].reply_txt
+
     @property
     def current_ID(self):
         return self._current_ID
+
+    @property
+    def parents(self):
+        return self._parents
 
 if __name__ == "__main__":
     graph = Graph()
