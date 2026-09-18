@@ -24,10 +24,9 @@ class xAI_Core:
     _service="GraphChatCli"
     _API_key_name="API_key"
 
-    def __init__(self):
+    def __init__(self, messages):
         self.llm_client = self._initalize_client()
 
-        messages=[xai_sdk.chat.system(_DEFAULT_SYSTEM_PROMPT)]
         self._chat = self.llm_client.chat.create(model=_MODEL,
                                                  store_messages=False,
                                                  messages=messages)
@@ -97,6 +96,6 @@ class xAI_Core:
         return xai_sdk.Client(api_key=API_key)
 
 if __name__ == "__main__":
-    LLM_core = xAI_Core()
+    LLM_core = xAI_Core([xai_sdk.chat.system(_DEFAULT_SYSTEM_PROMPT)])
     LLM_core.TUI_chat_loop()
 
