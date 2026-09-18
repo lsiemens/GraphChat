@@ -47,7 +47,9 @@ class Graph:
 
     _sys_prompt = system(xai_core._DEFAULT_SYSTEM_PROMPT)
 
-    def __init__(self):
+    def __init__(self, mock=False):
+        self._mock = mock
+
         # dict of nodes indexed by their IDs
         self._nodes = {}
 
@@ -57,7 +59,7 @@ class Graph:
         self._parents = {}
 
         self._current_ID = None
-        self.llm_core = xai_core.xAI_Core([self._sys_prompt])
+        self.llm_core = xai_core.xAI_Core([self._sys_prompt], mock=self._mock)
 
     def TUI_chat_loop(self):
         total_cost_usd = 0.0
@@ -157,7 +159,7 @@ class Graph:
             messages.append(assistant(self._nodes[node_id].reply_txt))
 
         self._current_ID = target_ID
-        self.llm_core = xai_core.xAI_Core(messages)
+        self.llm_core = xai_core.xAI_Core(messages, mock=self._mock)
 
     def get_node_txt(self, node_ID):
         if node_ID not in self._nodes:
@@ -171,6 +173,14 @@ class Graph:
     @property
     def parents(self):
         return self._parents
+
+    @property
+    def children(self):
+        return self._children
+
+    @property
+    def nodes(self):
+        return self._nodes.keys()
 
 if __name__ == "__main__":
     graph = Graph()

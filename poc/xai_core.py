@@ -24,9 +24,15 @@ class xAI_Core:
     _service="GraphChatCli"
     _API_key_name="API_key"
 
-    def __init__(self, messages):
-        self.llm_client = self._initalize_client()
+    def __init__(self, messages, mock=False):
+        self._mock = mock
 
+        if self._mock:
+            self.llm_client = None
+            self._chat = messages
+            return
+
+        self.llm_client = self._initalize_client()
         self._chat = self.llm_client.chat.create(model=_MODEL,
                                                  store_messages=False,
                                                  messages=messages)
@@ -35,7 +41,11 @@ class xAI_Core:
         """Non streaming chat responce"""
 
         self._chat.append(user_msg)
-        response = self._chat.sample()
+        response = None
+        if self._mock:
+            response = self._get_mock_response(user_msg, "This is a mock response, xAI is not connected.")
+        else:
+            response = self._chat.sample()
         self._chat.append(response)
         return response
 
@@ -68,6 +78,29 @@ class xAI_Core:
                 break
 
         print(f"\nTotal cost: ${total_cost_usd:.4f}")
+
+    def _get_mock_response(self, user_msg, content):
+        message = xai_sdk.proto.chat_pb2.CompletionMessage(
+                role=xai_sdk.proto.chat_pb2.ROLE_ASSISTANT,
+                content=content)
+
+        output = xai_sdk.proto.chat_pb2.CompletionOutput(
+                index=0,
+                finish_reason=xai_sdk.proto.sample_pb2.REASON_STOP,
+                message=message)
+
+        usage = xai_sdk.proto.usage_pb2.SamplingUsage(
+                prompt_tokens=len(user_msg.content[0].text),
+                completion_tokens=len(content),
+                total_tokens=len(user_msg.content[0].text)+len(content))
+
+        proto = xai_sdk.proto.chat_pb2.GetChatCompletionResponse(
+                id="mock-responce-" + str(hash(user_msg.content[0].text))[:5],
+                model=_MODEL + "-mock",
+                outputs=[output],
+                usage=usage)
+
+        return xai_sdk.chat.Response(proto, 0)
 
     def _save_API_key(self, API_key):
         if API_key is None:
