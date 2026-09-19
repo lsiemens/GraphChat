@@ -1,0 +1,14 @@
+.group {
+  height: 100%;
+}
+
+.separator {
+  width: calc(3*var(--border-size));
+  flex: 0 0 calc(3*var(--border-size));
+  background: var(--border);
+  cursor: col-resize;
+}
+
+.separator:hover {
+  background: var(--accent-border)
+}
