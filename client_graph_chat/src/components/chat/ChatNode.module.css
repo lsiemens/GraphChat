@@ -1,0 +1,22 @@
+.node {
+  display: flex;
+  flex-direction: column;
+  margin: var(--margin);
+  padding: var(--padding);
+  border: var(--border-size) solid var(--accent-border);
+}
+
+.request {
+  align-self: flex-end;
+  background: var(--accent-bg);
+  margin: var(--margin);
+  padding: var(--padding);
+  border: var(--border-size) solid var(--accent-border);
+}
+
+.reply {
+  align-self: flex-start;
+  margin: var(--margin);
+  padding: var(--padding);
+  border: var(--border-size) solid var(--border);
+}
