@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { NodeData, NodeRequest } from "@/types";
+import styles from "./ChatInput.module.css"
 
 interface Props {
   onSend: (node: NodeData) => void;
@@ -35,16 +36,18 @@ export function ChatInput({ onSend }: Props) {
   }
 
   return (
-    <div>
-      <textarea
-        value={text}
-        onChange={(event) => setText(event.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="Ask anything"
-        rows={3}
-      />
+    <div className={styles.input}>
+      <div className={styles.textarea}>
+        <textarea
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask anything"
+          rows={3}
+        />
+      </div>
 
-      <div>
+      <div className={styles.controls}>
         <button type="button">
           Settings 
         </button>

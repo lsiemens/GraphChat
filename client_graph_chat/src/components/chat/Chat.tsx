@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { NodeData, NodeRequest } from "@/types";
 import { ChatChain } from "./ChatChain";
 import { ChatInput } from "./ChatInput";
+import styles from "./Chat.module.css"
 
 const testChain: NodeData[] = [
   {
@@ -24,7 +25,7 @@ export function Chat() {
   }
 
   return (
-    <div>
+    <div className={styles.chat}>
       <header>
         <h2>Chat</h2>
       </header>

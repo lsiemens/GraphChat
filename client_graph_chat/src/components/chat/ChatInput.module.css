@@ -1,0 +1,17 @@
+.input {
+  flex-shrink: 0;
+  padding: var(--padding);
+}
+
+.textarea textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  font: inherit;
+}
+
+.controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: calc(3*var(--border-size));
+}
