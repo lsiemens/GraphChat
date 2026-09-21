@@ -1,4 +1,4 @@
 #Proof of Concept
 
-Here is a simple proof of concept for this chat interface. It uses xai-sdk and
-Streamlit for the graphical interface.
+This contains POCs for the mechanics behind GraphChat and the HTTP server for
+interaction between the typescript client and python engine.
