@@ -1,5 +1,5 @@
 """
-HTTP messages.
+HTTP messages
 """
 
 import re
@@ -26,24 +26,41 @@ def is_HTTP_header_field(name, value):
         return False
     return True
 
-def CriticalHTTPError(status_code, close):
+def CriticalHTTPError(status_code):
     """To be used when HTTP_reply fails"""
-    connection_value = "close" if close else "keep-alive"
     reply = f"HTTP/1.1 {status_code} {STATUS_CODES[status_code]}\r\n" \
-            f"connection: {connection_value}\r\n\r\n"
+            f"connection: close\r\n\r\n"
     return reply.encode(ENCODING_HEADER)
+
+def MinorHTTPError(status_code, close="close"):
+    reply = HTTPReply()
+    reply.status_code = status_code
+    reply.headers["connection"] = close
+    reply.serialize()
+    return reply
 
 class HTTPError(Exception):
     """Errors when parsing HTTP messages"""
     pass
 
 class HTTPReply:
-    def __init__(self):
+    def __init__(self, as_head=False):
         self.status_code = None
         self.headers = {"date":email.utils.formatdate(usegmt=True)}
         self.body = ""
 
-    def format(self):
+        self._as_head = as_head
+        self._serialized = False
+        self.buffer = b""
+
+    @property
+    def serialized(self):
+        return self._serialized
+
+    def serialize(self):
+        if self._serialized:
+            raise HTTPError(f"Error: HTTPReply can not be serialized more than once")
+
         # Format headers
         headers = {}
         for name, value in self.headers.items():
@@ -71,9 +88,12 @@ class HTTPReply:
         reply = f"{PROTOCOL} {status_code} {reason_phrase}\r\n"
         for name, value in headers.items():
             reply += f"{name}: {value}\r\n"
-        reply = reply.encode(ENCODING_HEADER) + b"\r\n" + body
-        print(f"\n\nFormat: {reply}")
-        return reply
+
+        self.buffer = reply.encode(ENCODING_HEADER) + b"\r\n"
+        if not self._as_head:
+            self.buffer += body
+
+        self._serialized = True
 
     def _force_no_content(self, status_code):
         """Replies that must not have content"""
@@ -88,7 +108,7 @@ class HTTPRequest:
         self.headers = {}
         self.body = b""
 
-        self._buffer = buffer
+        self.buffer = buffer
         self._bytes_header = 0
         self._is_ready = False
         self._reading_head = True
@@ -99,8 +119,8 @@ class HTTPRequest:
 
     def _get_line(self):
         """Reading line by line for the header"""
-        if b"\n" in self._buffer:
-            line, self._buffer = self._buffer.split(b"\n", 1)
+        if b"\n" in self.buffer:
+            line, self.buffer = self.buffer.split(b"\n", 1)
             self._bytes_header += len(line) + 1
             if len(line) > 0:
                 if line.endswith(b"\r"):
@@ -115,46 +135,40 @@ class HTTPRequest:
 
         if self._reading_head:
             while (line := self._get_line()) is not None:
+                # process the first line
+                if self.first_line is None:
+                    parts = line.split()
+                    if len(parts) != 3:
+                        raise HTTPError("Could not read METHOD, TARGET, PROTOCOL")
+                    self.first_line = (parts[0].upper(), parts[1], parts[2].upper())
+                    continue
+
                 # Check for end of the header
-                if len(line) == 0:
+                if (self.first_line is not None) and (len(line) == 0):
                     if "content-length" in self.headers:
                         length = self.headers["content-length"]
                         if not length.isdigit():
-                            print("Warning header-field \"content-length\" is malformed")
                             raise HTTPError("Invalid characters in \"content-length\"")
                         self.headers["content-length"] = int(self.headers["content-length"])
                     self._reading_head = False
                     break
 
-                # process the first line
-                if self.first_line is None:
-                    parts = line.split()
-                    if len(parts) != 3:
-                        print("Warning malformed first line")
-                        raise HTTPError("Could not read METHOD, TARGET, PROTOCOL")
-                    self.first_line = (parts[0].upper(), parts[1], parts[2].upper())
-                    continue
-
                 if ":" not in line:
-                    print("Warning malformed header-field")
                     raise HTTPError("Header-field missing \":\"")
 
                 name, value = line.split(":", 1)
 
                 if not is_HTTP_header_field(name, value):
-                    print("Warning malformed header-field")
                     raise HTTPError("Invalid characters in header-field name or value")
 
                 value = value.lstrip()
                 self.headers[name.lower()] = value
 
             if self._reading_head:
-                if (self._bytes_header + len(self._buffer) > self._max_header_size):
-                    print("Warning header is larger than the maximum value")
+                if (self._bytes_header + len(self.buffer) > self._max_header_size):
                     raise HTTPError("Header exceeds the maximum size")
             else:
                 if (self._bytes_header > self._max_header_size):
-                    print("Warning header is larger than the maximum value")
                     raise HTTPError("Header exceeds the maximum size")
 
 
@@ -166,17 +180,15 @@ class HTTPRequest:
             length = self.headers["content-length"]
 
             bytes_left = max(length - len(self.body), 0)
-            bytes_take = min(len(self._buffer), bytes_left)
+            bytes_take = min(len(self.buffer), bytes_left)
 
-            self.body   += self._buffer[:bytes_take]
-            self._buffer = self._buffer[bytes_take:]
+            self.body  += self.buffer[:bytes_take]
+            self.buffer = self.buffer[bytes_take:]
 
             if len(self.body) > self._max_body_size:
-                print("Warning body is larger than the maximum value")
                 raise HTTPError("Body exceeds the maximum size")
 
             if len(self.body) > length:
-                print("Warning body is malformed")
                 raise HTTPError("Body exceeds the length given by \"content-length\"")
 
             if len(self.body) == length:
