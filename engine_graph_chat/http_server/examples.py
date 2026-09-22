@@ -8,7 +8,7 @@ def HTML_server_core(root_target="./html"):
     root = os.path.realpath(root_target)
 
     def process_file_server(HTTP_request, HTTP_reply):
-        method, target, _ = HTTP_request.first_line
+        method, target, _ = HTTP_request.request_line
 
         target = urllib.parse.unquote(target)
         if target == "/":

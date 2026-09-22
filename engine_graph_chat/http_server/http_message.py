@@ -11,9 +11,16 @@ STATUS_CODES = {200:"OK", 201:"Created",
                 411:"Length Required", 413:"Content Too Large",
                 500:"Internal Server Error", 501:"Not Implemented",
                 505:"HTTP Version Not Supported"}
-PROTOCOL = "HTTP/1.1"
+HTTP_VERSION = "HTTP/1.1"
 ENCODING_HEADER = "iso-8859-1"
 ENCODING_BODY = "utf-8"
+
+# custom rules for HTTP header request-line method, target, HTTP_version
+# these should be reasonably save and allow most normal traffic
+VALID_HTTP_METHOD = re.compile(r"^[A-Za-z][A-Za-z0-9_\-]{0,31}$")
+VALID_HTTP_TARGET = re.compile(r"^\/[A-Za-z0-9\/\-._?=&]{0,4095}$")
+VALID_HTTP_VERSION = re.compile(r"^HTTP\/1\.[01]$")
+
 # character sets listed by CloudFlare
 # https://developers.cloudflare.com/rules/transform/request-header-modification/reference/header-format/
 VALID_HEADER_NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_\-]{0,255}$")
@@ -24,6 +31,16 @@ def is_HTTP_header_field(name, value):
         return False
     if not re.match(VALID_HEADER_VALUE, value):
         return False
+    return True
+
+def is_HTTP_request_line(method, target, HTTP_version):
+    if not re.match(VALID_HTTP_METHOD, method):
+        return False
+    if not re.match(VALID_HTTP_TARGET, target):
+        return False
+    if not re.match(VALID_HTTP_VERSION, HTTP_version):
+        return False
+
     return True
 
 def CriticalHTTPError(status_code):
@@ -85,7 +102,7 @@ class HTTPReply:
                 raise HTTPError("Error: replies with a body must declare the content type!")
 
         # Format reply
-        reply = f"{PROTOCOL} {status_code} {reason_phrase}\r\n"
+        reply = f"{HTTP_VERSION} {status_code} {reason_phrase}\r\n"
         for name, value in headers.items():
             reply += f"{name}: {value}\r\n"
 
@@ -104,7 +121,7 @@ class HTTPRequest:
     _max_header_size = 8190
 
     def __init__(self, buffer=b""):
-        self.first_line = None # None or (Method, target, protocol)
+        self.request_line = None # None or (Method, target, HTTP_version)
         self.headers = {}
         self.body = b""
 
@@ -136,15 +153,17 @@ class HTTPRequest:
         if self._reading_head:
             while (line := self._get_line()) is not None:
                 # process the first line
-                if self.first_line is None:
+                if self.request_line is None:
                     parts = line.split()
                     if len(parts) != 3:
-                        raise HTTPError("Could not read METHOD, TARGET, PROTOCOL")
-                    self.first_line = (parts[0].upper(), parts[1], parts[2].upper())
+                        raise HTTPError("Could not read METHOD, TARGET, VERSION")
+                    if not is_HTTP_request_line(*parts):
+                        raise HTTPError("Invalid characters in HTTP request-line")
+                    self.request_line = (parts[0].upper(), parts[1], parts[2].upper())
                     continue
 
                 # Check for end of the header
-                if (self.first_line is not None) and (len(line) == 0):
+                if (self.request_line is not None) and (len(line) == 0):
                     if "content-length" in self.headers:
                         length = self.headers["content-length"]
                         if not length.isdigit():

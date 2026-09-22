@@ -2,6 +2,7 @@
 Manage a single HTTP connection
 """
 
+import socket
 import http_message
 
 class HTTPConnection:
@@ -36,8 +37,23 @@ class HTTPConnection:
         return self._fileno
 
     def on_POLLIN(self):
-        data = self._socket.recv(self._block_size)
-        self._HTTP_request.buffer += data
+        if self._is_closed:
+            return
+
+        try:
+            data = self._socket.recv(self._block_size)
+            self._HTTP_request.buffer += data
+        except OSError as e:
+            print(f"Warning could not read from socket: {e}")
+            self._is_closed = True
+            self._socket.close()
+            return
+
+        if len(data) == 0:
+            print("Connection closed by client")
+            self._is_closed = True
+            self._socket.close()
+            return
 
         try:
             self._HTTP_request.update()
@@ -57,6 +73,9 @@ class HTTPConnection:
             self._HTTP_request = http_message.HTTPRequest(buffer)
 
     def on_POLLOUT(self):
+        if self._is_closed:
+            return
+
         if len(self._HTTP_reply_que) == 0:
             return
         current_reply = self._HTTP_reply_que[0]
@@ -91,10 +110,10 @@ class HTTPConnection:
         # The response to a HEAD request must be identical to that of a GET
         # request with all other properties the same, but with no body/content
         # in the HTTP reply.
-        method, target, protocol = HTTP_request.first_line
+        method, target, HTTP_version = HTTP_request.request_line
         is_head = (method == "HEAD")
         if is_head:
-            HTTP_request.first_line = ("GET", target, protocol)
+            HTTP_request.request_line = ("GET", target, HTTP_version)
         HTTP_reply = http_message.HTTPReply(as_head=is_head)
 
         # potential extra processing
