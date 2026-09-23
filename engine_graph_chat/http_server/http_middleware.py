@@ -5,6 +5,8 @@ Middleware for processing HTTP replies from requests
 import urllib.parse
 import os.path
 
+import http_message
+
 
 MIME = {".html": "text/html", ".css": "text/css", ".js": "text/javascript",
         ".mjs": "text/javascript", ".json": "application/json",
@@ -18,13 +20,7 @@ MIME = {".html": "text/html", ".css": "text/css", ".js": "text/javascript",
         ".bin": "application/octet-stream"}
 
 
-def set_content_type_from_target(HTTP_request, HTTP_reply):
-    if HTTP_reply.status_code is not None:
-        return
-
-    _, target, _ = HTTP_request.request_line
-    _, ext = os.path.splitext(target)
-
+def set_content_type_from_ext(ext, HTTP_reply):
     MIME_string = "application/octet-stream"
     if ext in MIME:
         MIME_string = MIME[ext]
@@ -33,6 +29,14 @@ def set_content_type_from_target(HTTP_request, HTTP_reply):
             MIME_string = "text/plain"
 
     HTTP_reply.headers["content-type"] = MIME_string
+
+
+def set_content_type_from_path(path, HTTP_reply):
+    if HTTP_reply.status_code is not None:
+        return
+
+    _, ext = os.path.splitext(path)
+    set_content_type_from_ext(ext, HTTP_reply)
 
 
 def load_file_from_target(root, HTTP_request, HTTP_reply):
@@ -60,9 +64,37 @@ def load_file_from_target(root, HTTP_request, HTTP_reply):
         is_valid_path = False
 
     if not is_valid_path:
-        HTTP_reply.status_code = 404
-        HTTP_reply.headers["connection"] = "close"
+        page_404 = make_simple_page(404, "Page not found!")
+        set_simple_reply(404, page_404, ".html", HTTP_reply)
         return
 
     with open(path, "rb") as fin:
         HTTP_reply.body = fin.read()
+    return path
+
+
+def set_simple_reply(status_code, body, ext, HTTP_reply):
+    if HTTP_reply.status_code is not None:
+        return
+
+    HTTP_reply.status_code = status_code
+    HTTP_reply.body = body
+
+    try:
+        if len(HTTP_reply.body) != 0:
+            set_content_type_from_ext(ext, HTTP_reply)
+    except TypeError:
+        raise http_message.HTTPError("ERROR: body must be a string or bytes")
+    HTTP_reply.headers["connection"] = "close"
+
+
+def make_simple_page(title, content):
+    page = "<!DOCTYPE html>" \
+           "<html>" \
+          f"<head><title>{title}</title></head>" \
+           "<body style=\"text-align:center;\">" \
+          f"<h1>{title}</h1>" \
+          f"<div>{content}</div>" \
+           "</body>" \
+           "</html>"
+    return page

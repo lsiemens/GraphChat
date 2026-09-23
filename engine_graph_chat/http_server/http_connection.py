@@ -126,8 +126,11 @@ class HTTPConnection:
         # potential extra processing
 
         if HTTP_reply.status_code is None:
-            self._process_request_core(HTTP_request, HTTP_reply)
-            # TODO add try except
+            try:
+                self._process_request_core(HTTP_request, HTTP_reply)
+            except http_message.HTTPError as e:
+                print(f"Failed to process HTTP reply: {e}")
+                self._HTTP_reply_que.append(http_message.MinorHTTPError(500, "close"))
         self._HTTP_reply_que.append(HTTP_reply)
 
 
