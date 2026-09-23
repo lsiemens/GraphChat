@@ -103,8 +103,15 @@ class HTTPConnection:
 
             return
 
-        data_sent = self._socket.send(current_reply.buffer[:self._block_size])
-        current_reply.buffer = current_reply.buffer[data_sent:]
+        try:
+            data_sent = self._socket.send(current_reply.buffer[:self._block_size])
+            current_reply.buffer = current_reply.buffer[data_sent:]
+        except (OSError, BrokenPipeError, ConnectionResetError) as e:
+            print(f"Warning connection closed during write: {e}")
+            self._is_closed = True
+            self._socket.close()
+        except BlockingIOError:
+            pass  # try again
 
     def _process_request(self, HTTP_request):
         # The response to a HEAD request must be identical to that of a GET

@@ -64,7 +64,7 @@ class HTTPReply:
     def __init__(self, as_head=False):
         self.status_code = None
         self.headers = {"date":email.utils.formatdate(usegmt=True)}
-        self.body = ""
+        self.body = b""
 
         self._as_head = as_head
         self._serialized = False
@@ -93,7 +93,12 @@ class HTTPReply:
         reason_phrase = STATUS_CODES[self.status_code]
 
         # Format body
-        body = self.body.encode(ENCODING_BODY)
+        body = self.body
+        if isinstance(body, str):
+            body = self.body.encode(ENCODING_BODY)
+        if not isinstance(body, bytes):
+            raise HTTPError("Error: the body must be a string or bytes!")
+
         if self._force_no_content(status_code):
             body = b""
         if len(body) != 0:
