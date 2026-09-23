@@ -1,7 +1,7 @@
-import urllib.parse
 import os.path
 
 import http_server
+import http_middleware
 
 
 def HTML_server_core(root_target="./html"):
@@ -10,42 +10,15 @@ def HTML_server_core(root_target="./html"):
     def process_file_server(HTTP_request, HTTP_reply):
         method, target, _ = HTTP_request.request_line
 
-        target = urllib.parse.unquote(target)
-        if target == "/":
-            target = "/index.html"
-        path = os.path.realpath(os.path.join(root, target.lstrip("/")))
-
-        is_valid_path = True
-        if not os.path.exists(path):
-            print(f"ERROR: path \"{path}\" does not exist!")
-            is_valid_path = False
-
-        if not os.path.isfile(path):
-            print(f"ERROR: path \"{path}\" is not a file!")
-            is_valid_path = False
-
-        if os.path.commonpath([root, path]) != root:
-            print(f"ERROR: path \"{path}\" is outside of \"{root_target}\"")
-            is_valid_path = False
-
-        if not is_valid_path:
-            HTTP_reply.status_code = 404
-            HTTP_reply.headers["connection"] = "close"
-            return
-
         if method != "GET":
             HTTP_reply.status_code = 501
             HTTP_reply.headers["connection"] = "close"
             return
 
-        body = None
-        with open(path, "r") as fin:
-            body = fin.read()
-
+        http_middleware.load_file_from_target(root, HTTP_request, HTTP_reply)
+        http_middleware.set_content_type_from_target(HTTP_request, HTTP_reply)
         HTTP_reply.status_code = 200
         HTTP_reply.headers["connection"] = "close"
-        HTTP_reply.headers["content-type"] = "text/html"
-        HTTP_reply.body = body
     return process_file_server
 
 
