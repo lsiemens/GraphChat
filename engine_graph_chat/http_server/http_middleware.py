@@ -73,6 +73,47 @@ def load_file_from_target(root, HTTP_request, HTTP_reply):
     return path
 
 
+def configure_CORS(allow_origins, allow_methods, allow_headers, expose_headers, max_age):
+    all_allowed_methods = ["GET", "HEAD", "POST"] + allow_methods
+    # TODO add processing for "*"
+    def set_CORS_headers(HTTP_request, HTTP_reply):
+        if HTTP_reply.status_code is not None:
+            # HTTP_request and HTTP_reply can not be trusted
+            return
+
+        method, _, _ = HTTP_request.request_line
+
+        if "origin" not in HTTP_request.headers:
+            return
+
+        origin = HTTP_request.headers["origin"]
+
+        if origin not in allow_origins:
+            set_simple_reply(403, "", "", HTTP_reply)
+            return
+
+        # CORS preflight request
+        if (method == "OPTIONS") and ("access-control-request-method" in HTTP_request.headers):
+            request_method = HTTP_request.headers["access-control-request-method"]
+            HTTP_reply.headers["access-control-allow-origin"] = origin
+            HTTP_reply.headers["vary"] = "origin"
+            HTTP_reply.headers["access-control-allow-methods"] = ", ".join(allow_methods)
+            HTTP_reply.headers["access-control-allow-headers"] = ", ".join(allow_headers)
+            HTTP_reply.headers["access-control-max-age"] = str(max_age)
+            set_simple_reply(204, "", "", HTTP_reply)
+            return
+
+        # From the specifications GET, HEAD and POST are CORS-safelisted
+        if method not in all_allowed_methods:
+            set_simple_reply(403, "", "", HTTP_reply)
+            return
+
+        HTTP_reply.headers["access-control-allow-origin"] = origin
+        if len(expose_headers) > 0:
+            HTTP_reply.headers["access-control-expose-headers"] = ", ".join(expose_headers)
+
+    return set_CORS_headers
+
 def set_simple_reply(status_code, body, ext, HTTP_reply):
     if HTTP_reply.status_code is not None:
         return

@@ -3,11 +3,10 @@ HTTP messages
 """
 
 import re
-import socket
 import email.utils
 
-STATUS_CODES = {200:"OK", 201:"Created",
-                400:"Bad Request", 404:"Not Found",
+STATUS_CODES = {200:"OK", 201:"Created", 204:"No Content",
+                400:"Bad Request", 403:"Forbidden", 404:"Not Found",
                 411:"Length Required", 413:"Content Too Large",
                 500:"Internal Server Error", 501:"Not Implemented",
                 505:"HTTP Version Not Supported"}
