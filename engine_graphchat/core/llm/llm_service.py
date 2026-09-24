@@ -4,8 +4,8 @@ The interface with xAI using the xai-sdk
 
 import xai_sdk
 
-from core.llm import utils, api_keys
-from core.graph import node
+from engine_graphchat.core.llm import utils, api_keys
+from engine_graphchat.core.dag import node
 
 
 class LLM_ERROR(Exception):

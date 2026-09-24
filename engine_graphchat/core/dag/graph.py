@@ -2,17 +2,12 @@
 Directed Acyclic Graph of NodeData
 """
 
-#try:
-#    from uuid import uuid7
-#except ImportError:
-#    from uuid6 import uuid7
-
 
 class GraphError(Exception):
     pass
 
 
-class DAGraph:
+class Graph:
     """Directed Acyclic Graph
 
     A Directed Acyclic Graph of node data. While it may in some cases be
