@@ -32,9 +32,8 @@ class LLM_Service:
             names.append(model.name)
         return names
 
-    def new_chat(self, model_name, messages, reasoning_effort):
+    def new_chat(self, model_name, messages):
         chat = self._client.chat.create(model_name, messages=messages,
-                                        reasoning_effort=reasoning_effort,
                                         store_messages=False)
         return LLM_Chat(chat)
 
