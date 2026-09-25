@@ -4,6 +4,7 @@ The interface with xAI using the xai-sdk
 
 import xai_sdk
 
+from engine_graphchat.core.llm import MOCK_sdk
 from engine_graphchat.core.llm import utils, api_keys
 from engine_graphchat.core.dag import node
 
@@ -18,7 +19,12 @@ class LLM_Service:
     """
 
     def __init__(self):
-        self._client = api_keys.initialize_client(xai_sdk.Client)
+        if not MOCK_sdk.use_MOCK_llm_sdk():
+            Client = xai_sdk.Client
+        else:
+            Client = MOCK_sdk.MOCK_Client
+
+        self._client = api_keys.initialize_client(Client)
 
         # Cached info
         self._info_models = None

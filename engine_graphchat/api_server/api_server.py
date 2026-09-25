@@ -60,6 +60,9 @@ class GraphChatServer:
 
 
 if __name__ == "__main__":
+    import os
+    os.environ["USE_MOCK_LLM_SDK"] = "TRUE"
+
     CORS_settings = (["http://localhost:5173"], [], ["content-type"], [], 600)
     engine = GraphChatServer(CORS_settings=CORS_settings)
 
