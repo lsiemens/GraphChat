@@ -3,7 +3,8 @@ Manage a single HTTP connection
 """
 
 import socket
-import http_message
+
+from . import http_message
 
 class HTTPConnection:
     _timeout = 1000

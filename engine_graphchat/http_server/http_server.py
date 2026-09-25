@@ -5,7 +5,7 @@ Simple HTTP server using sockets and poll.
 import select
 import socket
 
-import http_connection
+from . import http_connection
 
 class HTTPServer:
     _backlog = 16

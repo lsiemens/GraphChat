@@ -5,7 +5,7 @@ Middleware for processing HTTP replies from requests
 import urllib.parse
 import os.path
 
-import http_message
+from . import http_message
 
 
 MIME = {".html": "text/html", ".css": "text/css", ".js": "text/javascript",

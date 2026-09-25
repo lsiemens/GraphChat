@@ -1,7 +1,7 @@
 import os.path
 
-import http_server
-import http_middleware
+from . import http_server
+from . import http_middleware
 
 
 def HTML_server_core(root_target="./html"):
