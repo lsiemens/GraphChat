@@ -1,1 +1,1 @@
-export type { NodeData, NodeRequest, NodeReply, NodeUsage } from "./node/NodeData"
+export type { Prompt, NodeData, NodeRequest, NodeReply, NodeUsage, isNodeData } from "./node/NodeData"

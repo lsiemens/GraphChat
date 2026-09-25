@@ -1,9 +1,9 @@
 import { useState } from "react";
-import type { NodeData, NodeRequest } from "@/types";
+import type { Prompt } from "@/types";
 import styles from "./ChatInput.module.css"
 
 interface Props {
-  onSend: (node: NodeData) => void;
+  onSend: (prompt: Prompt) => void;
 }
 
 export function ChatInput({ onSend }: Props) {
@@ -16,15 +16,14 @@ export function ChatInput({ onSend }: Props) {
       return;
     }
 
-    const newNodeData: NodeData = {
-      id: "temp-" + crypto.randomUUID(),
+    const prompt: Prompt = {
       model: "model",
       upstream: [],
-      request: {timestamp: new Date().toISOString(), content: trimmed},
-      reply: null
+      timestamp: new Date().toISOString(),
+      content: trimmed,
     };
 
-    onSend(newNodeData);
+    onSend(prompt);
     setText("");
   }
 
