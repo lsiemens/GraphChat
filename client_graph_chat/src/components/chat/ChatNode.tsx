@@ -1,4 +1,4 @@
-import type { NodeData, NodeRequest, NodeReply } from "@/types";
+import type { NodeData } from "@/types";
 import styles from "./ChatNode.module.css"
 
 interface Props {
@@ -9,12 +9,12 @@ export function ChatNode({ node }: Props) {
   return (
     <div className={styles.node}>
       <div className={styles.request}>
-        {node.request.content}
+        {node.request}
       </div>
 
       {node.reply !== null && (
         <div className={styles.reply}>
-          {node.reply.content}
+          {node.reply}
         </div>
       )}
     </div>

@@ -5,10 +5,11 @@ import { sendMessage } from "../api/chatAPI";
 const testNodes: NodeData[] = [
   {
     id: "1",
-    model: "mock",
     upstream: [],
-    request: {timestamp: "time request", content: "Test message"},
-    reply: null
+    request: "time request",
+    reply: "Test message",
+    model: "mock",
+    costUSD: null,
   },
 ];
 
