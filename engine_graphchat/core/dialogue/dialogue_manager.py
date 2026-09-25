@@ -26,7 +26,7 @@ class DialogueManager:
 
                 reply = self.chat.send_node_request(node_data.request)
                 node_data.reply = reply
-                node_data.id = uuid7()
+                node_data.id = uuid7().hex
 
                 self.graph.add_node(node_data)
                 self.active_id = node_data.id
@@ -38,7 +38,7 @@ class DialogueManager:
 
                 reply = self.chat.send_node_request(node_data.request)
                 node_data.reply = reply
-                node_data.id = uuid7()
+                node_data.id = uuid7().hex
 
                 self.graph.add_node(node_data)
                 self.active_id = node_data.id

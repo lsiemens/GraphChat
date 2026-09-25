@@ -23,11 +23,19 @@ class GraphChatServer:
         if HTTP_request.headers["content-type"] != "application/json":
             http_middleware.set_simple_reply(400, "", "", HTTP_reply)
 
-        JSON_text = HTTP_request.body
-        prompt_api = api_json.load_JSON_as_type(JSON_text, api_types.PromptAPI)
-        print(f"POST {target}: data: {type(prompt_api)} => content: {prompt_api.content}")
+        JSON_request = HTTP_request.body
+        prompt_api = api_json.load_JSON_as_type(JSON_request, api_types.PromptAPI)
+        request_node_data = prompt_api.to_NodeData()
 
-        http_middleware.set_simple_reply(204, "", "", HTTP_reply)
+        # --- Enter Internal CORE --- #
+        _, reply_node_data = self.DM.turn(request_node_data)
+        # --- Exit Internal CORE --- #
+
+        node_data_api = api_types.NodeDataApi()
+        node_data_api.from_NodeData(reply_node_data)
+        JSON_reply = api_json.dump_JSON_as_type(node_data_api, api_types.NodeDataApi)
+
+        http_middleware.set_simple_reply(200, JSON_reply, ".json", HTTP_reply)
 
     def DELETE(self, HTTP_request, HTTP_reply):
         http_middleware.set_simple_reply(501, "", "", HTTP_reply)
