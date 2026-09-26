@@ -2,16 +2,7 @@ import { useState } from "react";
 import type { Prompt, NodeData } from "@/types";
 import { sendMessage } from "../api/chatAPI";
 
-const testNodes: NodeData[] = [
-  {
-    id: "1",
-    upstream: [],
-    request: "time request",
-    reply: "Test message",
-    model: "mock",
-    costUSD: null,
-  },
-];
+const testNodes: NodeData[] = [];
 
 export function useChat() {
   const [nodes, setNodes] = useState<NodeData[]>(testNodes);
@@ -23,6 +14,12 @@ export function useChat() {
     setIsSending(true);
 
     try {
+      // # TODO properly set the context
+      if (nodes.length > 0) {
+        prompt.upstream = [ nodes[nodes.length - 1].id ]
+      } else {
+        prompt.upstream = []
+      }
       const newNode = await sendMessage(prompt);
 
       setNodes((current) => [...current, newNode]);
