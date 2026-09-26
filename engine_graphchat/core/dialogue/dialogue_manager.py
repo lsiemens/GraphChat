@@ -9,12 +9,14 @@ from engine_graphchat.core.llm import llm_service
 
 
 class DialogueManager:
-    def __init__(self):
+    def __init__(self, model_name):
         self.graph = graph.Graph()
         self.llm_service = llm_service.LLM_Service()
         self.active_id = None
 
-        model_name = self.llm_service.get_model_names()[0]
+        if model_name is None:
+            model_name = self.llm_service.get_model_names()[0]
+
         self.chat = self.llm_service.new_chat(model_name, [])
 
     def turn(self, node_data):
