@@ -1,7 +1,12 @@
+import logging
+
 from engine_graphchat.core.dialogue import dialogue_manager
 from engine_graphchat.core.api import api_json, api_types
 
 from engine_graphchat.http_server import http_server, http_middleware
+
+
+logger = logging.getLogger(__name__)
 
 
 class GraphChatServer:
@@ -70,6 +75,7 @@ class GraphChatServer:
 if __name__ == "__main__":
     import os
     os.environ["USE_MOCK_LLM_SDK"] = "TRUE"
+    logging.basicConfig(filename="api_server.log", level=logging.INFO)
 
     CORS_settings = (["http://localhost:5173"], [], ["content-type"], [], 600)
     engine = GraphChatServer(CORS_settings=CORS_settings)

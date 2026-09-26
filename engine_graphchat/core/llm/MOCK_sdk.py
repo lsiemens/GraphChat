@@ -4,7 +4,11 @@ Interface for a  MOCK LLM service
 a mock interface based on the xAI-SDK
 """
 
+import logging
 import os
+
+
+logger = logging.getLogger(__name__)
 
 
 def use_MOCK_llm_sdk():
@@ -64,7 +68,7 @@ class MOCK_Client:
         self.models = MOCK_Models()
         self.chat = MOCK_Chat()
 
-        print("Connected to MOCK LLM service")
+        print("Connected to MOCK LLM service.")
 
     def close(self):
         pass

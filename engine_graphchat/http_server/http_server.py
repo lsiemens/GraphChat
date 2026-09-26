@@ -2,10 +2,15 @@
 Simple HTTP server using sockets and poll.
 """
 
+import logging
 import select
 import socket
 
 from . import http_connection
+
+
+logger = logging.getLogger(__name__)
+
 
 class HTTPServer:
     _backlog = 16
@@ -24,8 +29,8 @@ class HTTPServer:
                 server.bind((self._host, self._port))
                 server.listen(self._backlog)
                 server.setblocking(False)
-            except OSError as e:
-                print(f"Error when binding socket: {e}")
+            except OSError:
+                logger.exception("Failure while binding socket.")
                 raise
 
             poller = select.poll()
@@ -42,8 +47,8 @@ class HTTPServer:
                             try:
                                 client = server.accept()
                                 client[0].setblocking(False)
-                            except OSError as e:
-                                print(f"Warning failed to accept connection: {e}")
+                            except OSError:
+                                logger.warning("Failed to accept connection.")
                                 continue
 
                             conn = http_connection.HTTPConnection(*client, self._process_request)
@@ -73,6 +78,7 @@ class HTTPServer:
                 print("\nClosing HTTP server!")
 
 if __name__ == "__main__":
+    logging.basicConfig(filename="http_server.log", level=logging.INFO)
     print("Reply to all requests with 200 and Connection:close")
     server = HTTPServer("0.0.0.0", 8000, http_connection.process_request_all_good)
     server.start()

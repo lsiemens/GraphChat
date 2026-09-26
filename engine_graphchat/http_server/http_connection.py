@@ -2,9 +2,15 @@
 Manage a single HTTP connection
 """
 
+
+import logging
 import socket
 
 from . import http_message
+
+
+logger = logging.getLogger(__name__)
+
 
 class HTTPConnection:
     _timeout = 1000
@@ -44,22 +50,22 @@ class HTTPConnection:
         try:
             data = self._socket.recv(self._block_size)
             self._HTTP_request.buffer += data
-        except OSError as e:
-            print(f"Warning could not read from socket: {e}")
+        except OSError:
+            logger.warning("Could not read from socket, closing connection.")
             self._is_closed = True
             self._socket.close()
             return
 
         if len(data) == 0:
-            print("Connection closed by client")
+            logger.info("Connection closed by the client.")
             self._is_closed = True
             self._socket.close()
             return
 
         try:
             self._HTTP_request.update()
-        except http_message.HTTPError as e:
-            print(f"Warning could not update HTTP request: {e}")
+        except http_message.HTTPError:
+            logger.warning("Could not update the HTTP request.")
             HTTP_reply = http_message.HTTPReply()
             HTTP_reply.status_code = 400
             HTTP_reply.headers["connection"] = "close"
@@ -84,8 +90,8 @@ class HTTPConnection:
         if not current_reply.serialized:
             try:
                 current_reply.serialize()
-            except http_message.HTTPError as e:
-                print(f"Warning could not serialize HTTP reply: {e}")
+            except http_message.HTTPError:
+                logger.warning("Could not serialize the HTTP reply.")
                 self._HTTP_reply_que[0] = http_message.MinorHTTPError(400, "close")
                 current_reply = self._HTTP_reply_que[0]
                 # catch exception from serialize in Minor error
@@ -98,8 +104,8 @@ class HTTPConnection:
 
             try:
                 del self._HTTP_reply_que[0]
-            except KeyError as e:
-                print(f"Warning could not delete old HTTP reply: {e}")
+            except KeyError:
+                logger.exception("Could not delete a completed HTTP reply.")
                 # TODO more checking and recovery
 
             return
@@ -107,8 +113,8 @@ class HTTPConnection:
         try:
             data_sent = self._socket.send(current_reply.buffer[:self._block_size])
             current_reply.buffer = current_reply.buffer[data_sent:]
-        except (OSError, BrokenPipeError, ConnectionResetError) as e:
-            print(f"Warning connection closed during write: {e}")
+        except (OSError, BrokenPipeError, ConnectionResetError):
+            logger.warning("Connection closed during write.")
             self._is_closed = True
             self._socket.close()
         except BlockingIOError:
@@ -129,8 +135,8 @@ class HTTPConnection:
         if HTTP_reply.status_code is None:
             try:
                 self._process_request_core(HTTP_request, HTTP_reply)
-            except http_message.HTTPError as e:
-                print(f"Failed to process HTTP reply: {e}")
+            except http_message.HTTPError:
+                logger.exception("Failed to process the HTTP request.")
                 self._HTTP_reply_que.append(http_message.MinorHTTPError(500, "close"))
         self._HTTP_reply_que.append(HTTP_reply)
 

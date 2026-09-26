@@ -1,3 +1,4 @@
+import logging
 import os.path
 
 from . import http_server
@@ -59,12 +60,15 @@ def reflect_json_core(allow_origins, allow_methods, allow_headers, expose_header
 
 if __name__ == "__main__":
     IS_TEST_FILE_SERVER = False
+    logging.basicConfig(filename="examples.log", level=logging.INFO)
 
     core = None
     if IS_TEST_FILE_SERVER:
+        print("Static File server")
         root = input("Enter path to site root: ")
         core = HTML_server_core(root)
     else:
+        print("API server: reflect all requests.")
         core = reflect_json_core(["http://localhost:5173"], [], ["content-type"], [], 600)
     server = http_server.HTTPServer("0.0.0.0", 8000, core)
     server.start()

@@ -4,31 +4,33 @@ Get and store API keys
 Using python keyring
 """
 
+import logging
 import getpass
 
 import keyring
 
 
+logger = logging.getLogger(__name__)
 _service = "com.lsiemens.graphchat.engine"
 _API_key_name = "API_key"
 
 
 def clear_API_key():
+    logger.info("Clear API keys.")
     try:
         keyring.delete_password(_service, _API_key_name)
     except keyring.errors.PasswordDeleteError:
-        print("Error: Failed to clear API key from keyring.")
+        logger.exception("Failed to clear API key from keyring!")
         raise
 
 
 def save_API_key(API_key):
     if API_key is None:
-        raise keyring.errors.PasswordSetError("Error: API key must not be None.")
+        raise ValueError("API key must not be None.")
 
     try:
         keyring.set_password(_service, _API_key_name, API_key)
     except keyring.errors.PasswordSetError:
-        print("Error: Failed to save API key to keyring.")
         raise
 
 
@@ -57,6 +59,10 @@ def initialize_client(initializer):
                 print("\tThe API key can not be empty!")
                 API_key = None
 
-        save_API_key(API_key)
+        try:
+            save_API_key(API_key)
+        except (keyring.errors.PasswordSetError, ValueError):
+            logger.exception("Failed to save API key to keyring.")
 
+    logger.info("Initialize client with API key from keyring.")
     return initializer(API_key)

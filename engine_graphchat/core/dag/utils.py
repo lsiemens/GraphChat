@@ -5,6 +5,7 @@ Utility functions for ./graph
 from . import node
 from engine_graphchat.core.llm import utils
 
+
 def node_from_string(content, model_name, previous_node_id=None):
     upstream = []
     if previous_node_id is not None:

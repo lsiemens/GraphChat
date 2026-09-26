@@ -2,9 +2,12 @@
 HTTP messages
 """
 
+import logging
 import re
 import email.utils
 
+
+logger = logging.getLogger(__name__)
 STATUS_CODES = {200:"OK", 201:"Created", 204:"No Content",
                 400:"Bad Request", 403:"Forbidden", 404:"Not Found",
                 411:"Length Required", 413:"Content Too Large",
@@ -99,7 +102,10 @@ class HTTPReply:
             raise HTTPError("Error: the body must be a string or bytes!")
 
         if self._force_no_content(status_code):
+            if len(body) != 0:
+                logger.warning("HTTP reply with status code %d had a non-empty body", status_code)
             body = b""
+
         if len(body) != 0:
             headers["content-length"] = str(len(body))
             if "content-type" not in headers:
@@ -205,7 +211,7 @@ class HTTPRequest:
             bytes_left = max(length - len(self.body), 0)
             bytes_take = min(len(self.buffer), bytes_left)
 
-            self.body  += self.buffer[:bytes_take]
+            self.body += self.buffer[:bytes_take]
             self.buffer = self.buffer[bytes_take:]
 
             if len(self.body) > self._max_body_size:

@@ -28,7 +28,7 @@ class NodeDataApi:
     costUSD: float
 
     def __init__(self):
-        self.id = None 
+        self.id = None
         self.ustream = None
         self.request = None
         self.reply = None

@@ -2,6 +2,7 @@
 A commandline chat client
 """
 
+import logging
 try:
     import prompt_toolkit
 except ImportError:
@@ -17,6 +18,10 @@ except ImportError:
 
 from engine_graphchat.core.dialogue import dialogue_manager
 from engine_graphchat.core.dag import utils
+
+
+logger = logging.getLogger(__name__)
+
 
 class Chat_TUI:
     _model_name = ""
@@ -88,5 +93,6 @@ class Chat_TUI:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(filename="chat_tui.log", level=logging.INFO)
     TUI = Chat_TUI()
     TUI.start()

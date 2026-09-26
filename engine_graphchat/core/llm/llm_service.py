@@ -2,11 +2,16 @@
 The interface with xAI using the xai-sdk
 """
 
+import logging
+
 import xai_sdk
 
 from engine_graphchat.core.llm import MOCK_sdk
 from engine_graphchat.core.llm import utils, api_keys
 from engine_graphchat.core.dag import node
+
+
+logger = logging.getLogger(__name__)
 
 
 class LLM_ERROR(Exception):
@@ -20,8 +25,10 @@ class LLM_Service:
 
     def __init__(self):
         if not MOCK_sdk.use_MOCK_llm_sdk():
+            logger.info("Using Client from xAI-SDK.")
             Client = xai_sdk.Client
         else:
+            logger.info("Using Client from MOCK SDK.")
             Client = MOCK_sdk.MOCK_Client
 
         self._client = api_keys.initialize_client(Client)
@@ -31,6 +38,7 @@ class LLM_Service:
 
     def get_model_names(self):
         if self._info_models is None:
+            logger.info("Cache available language models.")
             self._info_models = self._client.models.list_language_models()
 
         names = []

@@ -2,12 +2,14 @@
 Middleware for processing HTTP replies from requests
 """
 
+import logging
 import urllib.parse
 import os.path
 
 from . import http_message
 
 
+logger = logging.getLogger(__name__)
 MIME = {".html": "text/html", ".css": "text/css", ".js": "text/javascript",
         ".mjs": "text/javascript", ".json": "application/json",
         ".ico": "image/vnd.microsoft.icon", ".bmp": "image/bmp",
@@ -52,15 +54,15 @@ def load_file_from_target(root, HTTP_request, HTTP_reply):
 
     is_valid_path = True
     if not os.path.exists(path):
-        print(f"ERROR: path \"{path}\" does not exist!")
+        logger.error("HTTP: request path \"%s\" does not exist!", path)
         is_valid_path = False
 
     if not os.path.isfile(path):
-        print(f"ERROR: path \"{path}\" is not a file!")
+        logger.error("HTTP: request path \"%s\" is not a file!", path)
         is_valid_path = False
 
     if os.path.commonpath([root, path]) != root:
-        print(f"ERROR: path \"{path}\" is outside of \"{root}\"")
+        logger.error("HTTP: request path \"%s\" is outside of \"%s\"", path, root)
         is_valid_path = False
 
     if not is_valid_path:
