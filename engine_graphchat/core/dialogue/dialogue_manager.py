@@ -61,7 +61,7 @@ class DialogueManager:
             The ID or ID prefix of the node to checkout
         """
         # checkout TIP
-        if target.strip() == "TIP":
+        if target.strip() == "tip":
             if self._HEAD is None:
                 # you are already at a tip
                 return
@@ -102,6 +102,9 @@ class DialogueManager:
         else:
             self._state.upstream.append(self._get_ID(target))
         self._update()
+
+    def LOG(self):
+        return self.graph.topological_ordering(self._state.upstream)
 
     def set_prompt(self, prompt, timestamp=None):
         self._state.request.content = prompt

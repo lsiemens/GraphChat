@@ -22,17 +22,108 @@ from engine_graphchat.core.dag import utils
 
 logger = logging.getLogger(__name__)
 
-
 class Chat_TUI:
     _model_name = "grok-4.20-0309-non-reasoning"
     _agent_name = "Grok"
+    _ID_chars = 10
 
     def __init__(self):
         self.DM = dialogue_manager.DialogueManager(model_name=self._model_name)
         self._greeting = f"Connected to {self._agent_name}!"
+        self.show_ids = False
 
         self.stats = {"cost": 0, "prompt_tokens": 0, "reasoning_tokens": 0, "completion_tokens": 0, "cached_tokens": 0}
 
+        self._setup_print_and_input()
+
+    def command(self, prompt):
+        if prompt.lower() == "toggle ids":
+            self.show_ids = not self.show_ids
+            return True
+
+        if prompt.lower() == "refresh":
+            for node in self.DM.LOG():
+                self.print_node(node, reply_only=False)
+            return True
+
+        if prompt.lower().startswith("merge "):
+            targets = prompt.split(" ")[1:]
+            self.DM.MERGE(targets)
+            return True
+
+        if prompt.lower().startswith("checkout "):
+            target = prompt.split(" ", 1)[1]
+            self.DM.CHECKOUT(target)
+            return True
+
+        if prompt.lower() == "show nodes":
+            node_text = "Chat Nodes  \n"
+            for node_id in self.DM.graph.nodes:
+                node = self.DM.graph.nodes[node_id]
+                node_text += f"> Node: `{node_id[:self._ID_chars]}`  \n"
+                for i, p_node_id in enumerate(node.upstream):
+                    node_text += f">> Upstream: `{p_node_id[:self._ID_chars]}`  \n"
+                node_text += "\n"
+
+            self.print(node_text)
+            return True
+
+        if prompt.lower() == "status":
+            node_text = f"`Proposed Node`: `Model`: \"{self.DM._state.model}\"  \n"
+            node_text += f"`Upstream`: {[node_id[:self._ID_chars] for node_id in self.DM._state.upstream]}  \n"
+            node_text += f"`Prompt`: \"{self.DM._state.request.content[:100]}\"  \n"
+
+            self.print(node_text)
+            return True
+
+        if prompt.lower() == "help":
+            help_text = "> Commands:  \n"
+            help_text += "- `toggle ids`: Show node IDs  \n"
+            help_text += "- `refresh`: Refresh screen  \n"
+            help_text += "- `merge <node ID> <node ID> ...`: Merge into the working node  \n"
+            help_text += "- `checkout <node ID>`: Checkout existing node  \n"
+            help_text += "- `status`: Show the working node  \n"
+
+            self.print(help_text)
+            return True
+        return False
+
+    def start(self):
+        self.print(f"{self._greeting}\n")
+
+        try:
+            while True:
+                prompt = self.get_input()
+
+                if prompt == "":
+                    continue
+
+                if prompt[0] == ":":
+                    if self.command(prompt[1:]):
+                        continue
+                    else:
+                        self.print(f"`Command`: \"{prompt[1:]}\" not recognized. For help enter \":help\"  \n")
+                        continue
+
+                if prompt.lower() == "exit":
+                    break
+
+                self.DM.set_prompt(prompt)
+                data_node = self.DM.COMMIT()
+
+                self.print_node(data_node, reply_only=True)
+
+                usage = data_node.reply.usage
+                self.stats["cost"] += usage.cost_USD
+                self.stats["prompt_tokens"] += usage.prompt_tokens
+                self.stats["completion_tokens"] += usage.completion_tokens
+                self.stats["cached_tokens"] += usage.cached_prompt_text_tokens
+        except KeyboardInterrupt:
+            pass
+
+        self.print(f">> **STATS**: Total cost: ${self.stats['cost']:.4f}, **Total tokens**: [{self.stats['prompt_tokens']}, {self.stats['completion_tokens']}] cache ({self.stats['cached_tokens']})\n")
+
+    def _setup_print_and_input(self):
         if prompt_toolkit is not None:
 
             kb = prompt_toolkit.key_binding.KeyBindings()
@@ -46,9 +137,7 @@ class Chat_TUI:
                 event.current_buffer.insert_text('\n')
 
             prompt_msg = prompt_toolkit.formatted_text.HTML("<ansicyan><b>You:</b></ansicyan> ")
-            self._session = prompt_toolkit.PromptSession(prompt_msg,
-                                                         multiline=True,
-                                                         key_bindings=kb)
+            self._session = prompt_toolkit.PromptSession(prompt_msg, multiline=True, key_bindings=kb)
 
         if rich is not None:
             self._console = rich.console.Console()
@@ -71,35 +160,15 @@ class Chat_TUI:
         else:
             print(string)
 
-    def start(self):
-        self.print(f"{self._greeting}\n")
+    def print_node(self, data_node, reply_only=True):
+        if not reply_only:
+            self.print(f"You: {data_node.request.content}")
 
-        try:
-            while True:
-                prompt = self.get_input()
-
-                if prompt == "":
-                    continue
-
-                if prompt == "exit":
-                    break
-
-                prompt_data_node = utils.node_from_string(prompt,
-                                                          self._model_name,
-                                                          self.DM.active_id)
-                _, reply_data_node = self.DM.turn(prompt_data_node)
-
-                self.print(f"  \n\n{self._agent_name}: {reply_data_node.reply.content}  \n")
-                usage = reply_data_node.reply.usage
-                self.stats["cost"] += usage.cost_USD
-                self.stats["prompt_tokens"] += usage.prompt_tokens
-                self.stats["completion_tokens"] += usage.completion_tokens
-                self.stats["cached_tokens"] += usage.cached_prompt_text_tokens
-                self.print(f"> **REPLY**: ${usage.cost_USD:.4f}, **tokens**: [{usage.prompt_tokens}, {usage.completion_tokens}], cache ({usage.cached_prompt_text_tokens}) \n\n---\n\n")
-        except KeyboardInterrupt:
-            pass
-
-        self.print(f">> **STATS**: Total cost: ${self.stats['cost']:.4f}, **Total tokens**: [{self.stats['prompt_tokens']}, {self.stats['completion_tokens']}] cache ({self.stats['cached_tokens']})\n")
+        self.print(f"  \n\n{self._agent_name}: {data_node.reply.content}  \n")
+        if self.show_ids:
+            self.print(f"Node ID: `{data_node.id[:self._ID_chars]}`")
+        usage = data_node.reply.usage
+        self.print(f"> **REPLY**: ${usage.cost_USD:.4f}, **tokens**: [{usage.prompt_tokens}, {usage.completion_tokens}], cache ({usage.cached_prompt_text_tokens}) \n\n---\n\n")
 
 
 if __name__ == "__main__":
