@@ -1,15 +1,40 @@
 """
 Classes defining a chat Node
 """
+import hashlib
 
 
 class NodeData:
+    _ENCODING = "utf-8"
+
     def __init__(self, id, model, upstream, request, reply):
         self.id = id
         self.model = model
         self.upstream = upstream
         self.request = request
         self.reply = reply
+
+    def hash(self):
+        if self.model is None:
+            raise ValueError("Can not generate node ID, model is None")
+        if self.upstream is None:
+            raise ValueError("Can not generate node ID, upstream is None")
+        if self.request is None:
+            raise ValueError("Can not generate node ID, request is None")
+        if self.request.content is None:
+            raise ValueError("Can not generate node ID, request.content is None")
+        if self.reply is None:
+            raise ValueError("Can not generate node ID, reply is None")
+        if self.reply.content is None:
+            raise ValueError("Can not generate node ID, reply.content is None")
+
+        identifying_data = f"{self.model}|{self.request.content}|{self.upstream}|{self.reply.content}"
+        identifying_data = identifying_data.encode(self._ENCODING)
+
+        return hashlib.sha256(identifying_data).hexdigest()
+
+    def validate(self):
+        return self.id == self.hash()
 
     def __str__(self):
         string = f"NodeData: id:{self.id}, " \

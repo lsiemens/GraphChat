@@ -3,6 +3,7 @@ The interface with xAI using the xai-sdk
 """
 
 import logging
+import grpc
 
 import xai_sdk
 
@@ -64,7 +65,11 @@ class LLM_Chat:
         user_msg = xai_sdk.chat.user(node_request.content)
         self._chat.append(user_msg)
 
-        reply = self._chat.sample()
+        try:
+            reply = self._chat.sample()
+        except grpc.RpcError:
+            logger.exception("RPC connection error.")
+            raise
 
         if reply.finish_reason != "REASON_STOP":
             raise LLM_ERROR("LLM: Failed to generate a full reply!")
@@ -84,3 +89,11 @@ class LLM_Chat:
                                     usage)
 
         return node_reply
+
+
+def node_to_xAI_messages(node_data):
+    if node_data.request is None:
+        raise LLM_ERROR("NodeData dose not have a prompt")
+    if node_data.reply is None:
+        raise LLM_ERROR("NodeData does not have an agent reply")
+    return [xai_sdk.chat.user(node_data.request.content), xai_sdk.chat.assistant(node_data.reply.content)]
