@@ -26,6 +26,12 @@ class Graph:
 
         self.nodes[node.id] = node
 
+    def validate(self):
+        for node in self.nodes.values():
+            if not node.validate():
+                return False
+        return True
+
     def topological_ordering(self, upstream):
         """List ancestor nodes subject to a toplological sort
 
@@ -77,12 +83,12 @@ class Graph:
         """
 
         children = {}
-        for node_id, node in self.nodes.items():
+        for c_node_id, node in self.nodes.items():
             for p_node_id in node.upstream:
                 if p_node_id not in children:
-                    children[p_node_id] = [node_id]
+                    children[p_node_id] = [c_node_id]
                 else:
-                    children[p_node_id] += [node_id]
+                    children[p_node_id] += [c_node_id]
 
         # BFS
         terminal_node_id = set()

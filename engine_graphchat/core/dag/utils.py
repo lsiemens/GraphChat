@@ -13,8 +13,12 @@ def empty_node(model_name):
 
 
 def copy_node(target_node):
-    node_request = node.NodeRequest(utils.get_timestamp(), target_node.request.content)
-    node_data = node.NodeData(None, target_node.model, target_node.upstream, node_request, None)
+    model = target_node.model
+    upstream = target_node.upstream[:]
+    request_content = target_node.request.content
+
+    node_request = node.NodeRequest(utils.get_timestamp(), request_content)
+    node_data = node.NodeData(None, model, upstream, node_request, None)
     return node_data
 
 

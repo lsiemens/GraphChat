@@ -17,7 +17,6 @@ except ImportError:
     print("Warning: Could not import \"rich\", formatting of markdown will not be available")
 
 from engine_graphchat.core.dialogue import dialogue_manager
-from engine_graphchat.core.dag import utils
 
 
 logger = logging.getLogger(__name__)
@@ -72,6 +71,8 @@ class Chat_TUI:
             node_text = f"`Proposed Node`: `Model`: \"{self.DM._state.model}\"  \n"
             node_text += f"`Upstream`: {[node_id[:self._ID_chars] for node_id in self.DM._state.upstream]}  \n"
             node_text += f"`Prompt`: \"{self.DM._state.request.content[:100]}\"  \n"
+            if self.DM._HEAD is not None:
+                node_text += f"`HEAD`: {self.DM._HEAD[:self._ID_chars]}"
 
             self.print(node_text)
             return True

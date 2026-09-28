@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class GraphChatServer:
     def __init__(self, CORS_settings):
-        self.DM = dialogue_manager.DialogueManager()
+        self.DM = dialogue_manager.DialogueManager(model_name=None)
 
         self.set_CORS_headers = http_middleware.configure_CORS(*CORS_settings)
 
@@ -30,10 +30,14 @@ class GraphChatServer:
 
         JSON_request = HTTP_request.body
         prompt_api = api_json.load_JSON_as_type(JSON_request, api_types.PromptAPI)
-        request_node_data = prompt_api.to_NodeData()
 
         # --- Enter Internal CORE --- #
-        _, reply_node_data = self.DM.turn(request_node_data)
+        # TODO get proper model names from the client
+        # self.DM.set_model(prompt_api.model)
+        self.DM.set_upstream(prompt_api.upstream)
+        self.DM.set_prompt(prompt_api.content, prompt_api.timestamp)
+
+        reply_node_data = self.DM.COMMIT()
         # --- Exit Internal CORE --- #
 
         node_data_api = api_types.NodeDataApi()
