@@ -1,0 +1,21 @@
+[project]
+name = "engine-graphchat"
+version = "0.0.0"
+description = "GraphChat engine using FastAPI"
+readme = "README.md"
+authors = [
+    { name = "Luke Siemens", email = "luke@lsiemens.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.141.1",
+    "uvicorn>=0.54.0",
+]
+
+[project.scripts]
+dev = "engine_graphchat.api_server.uv_cli:dev"
+serve = "engine_graphchat.api_server.uv_cli:serve"
+
+[build-system]
+requires = ["uv_build>=0.12.19,<0.13.0"]
+build-backend = "uv_build"
