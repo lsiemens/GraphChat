@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Prompt, NodeData } from "@/types";
-import { sendMessage } from "../api/chatAPI";
+import { sendMessage } from "@/api/chatAPI";
 
 const testNodes: NodeData[] = [];
 

@@ -1,5 +1,5 @@
 import type { Prompt, NodeData } from "@/types";
-import {isNodeData} from "../types/node/NodeData"
+import {isNodeData} from "@/types/node/NodeData"
 
 const API_URL = "http://localhost:8000/api/v1";
 

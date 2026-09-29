@@ -1,4 +1,4 @@
-import { useChat } from "../../hooks/useChat";
+import { useChat } from "@/hooks/useChat";
 import type { NodeData } from "@/types";
 import { ChatChain } from "./ChatChain";
 import { ChatInput } from "./ChatInput";

@@ -1,8 +1,8 @@
 import { SplitView } from "./components/layout/SplitView"
 import { Chat } from "./components/chat/Chat"
-import './App.css'
+import './ClientGraphChat.css'
 
-function App() {
+function ClientGraphChat() {
   return (
     <>
       <h1>Test</h1>
@@ -19,4 +19,4 @@ function App() {
   )
 }
 
-export default App
+export default ClientGraphChat
