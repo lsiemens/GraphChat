@@ -1,7 +1,7 @@
 {
   "name": "client_graph_chat",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1",
   "description": "A graph based LLM client.",
   "author": "Luke Siemens",
   "license": "BSD-3-Clause",
