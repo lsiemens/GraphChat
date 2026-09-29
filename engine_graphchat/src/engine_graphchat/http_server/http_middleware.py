@@ -116,6 +116,7 @@ def configure_CORS(allow_origins, allow_methods, allow_headers, expose_headers, 
 
     return set_CORS_headers
 
+
 def set_simple_reply(status_code, body, ext, HTTP_reply):
     if HTTP_reply.status_code is not None:
         return
@@ -141,3 +142,66 @@ def make_simple_page(title, content):
            "</body>" \
            "</html>"
     return page
+
+
+# TODO add simple radix routing
+def configure_routing(patterns):
+    for pattern in patterns.values():
+        if pattern.endswith("/"):
+            raise ValueError("Patterns cannot end with \"/\"")
+        if not pattern.startswith("/"):
+            raise ValueError("Patterns must begin with \"/\"")
+
+    patterns = {label: pattern_blocks[1:].split("/") for label, pattern_blocks in patterns.items()}
+    for pattern_blocks in patterns.values():
+        for pattern_block in pattern_blocks:
+            if len(pattern_block) == 0:
+                raise ValueError("Pattern blocks must not be empty")
+
+            if ("{" not in pattern_block) and ("}" not in pattern_block):
+                continue
+
+            if len(pattern_block) <= 2:
+                raise ValueError("Variable pattern blocks must not be empty")
+
+            if pattern_block[0] != "{":
+                raise ValueError("Variable pattern blocks must start with \"{\"")
+            if pattern_block[-1] != "}":
+                raise ValueError("Variable pattern blocks must end with \"}\"")
+
+    def route_URL(path):
+        if path.endswith("/"):
+            raise ValueError("Path cannot end with \"/\"")
+        if not path.startswith("/"):
+            raise ValueError("Path must begin with \"/\"")
+
+        path_blocks = path[1:].split("/")
+
+        for label, pattern_blocks in patterns.items():
+            if len(path_blocks) != len(pattern_blocks):
+                continue
+
+            parameters = {}
+            is_match = True
+            for i in range(len(path_blocks)):
+                is_parameter = False
+                parameter_name = ""
+                if "{" in pattern_blocks[i]:
+                    is_parameter = True
+                    parameter_name = pattern_blocks[i][1:-1]
+
+                if is_parameter:
+                    parameters[parameter_name] = path_blocks[i]
+                    continue
+
+                if path_blocks[i] != pattern_blocks[i]:
+                    is_match = False
+                    break
+
+            if not is_match:
+                continue
+
+            return label, parameters
+        return None, None
+
+    return route_URL

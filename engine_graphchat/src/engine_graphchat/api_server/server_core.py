@@ -10,7 +10,7 @@ class ServerCore:
     def __init__(self):
         self.DM = dialogue_manager.DialogueManager(model_name=None)
 
-    def POST_prompt(self, prompt_api):
+    def POST_graphs_F_nodes(self, prompt_api):
         # TODO get proper model names from the client
         # self.DM.set_model(prompt_api.model)
         self.DM.set_upstream(prompt_api.upstream)
@@ -19,3 +19,15 @@ class ServerCore:
         reply_node_data = self.DM.COMMIT()
 
         return reply_node_data
+
+    def GET_graphs_F_nodes(self, graph_id):
+        pass
+
+    def GET_graphs_F_nodes_F(self, graph_id, node_id):
+        pass
+
+    def GET_graphs_F_nodes_F_info(self, graph_id, node_id):
+        pass
+
+    def GET_system_models(self):
+        pass

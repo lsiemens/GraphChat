@@ -1,10 +1,10 @@
 import type { Prompt, NodeData } from "@/types";
 import {isNodeData} from "../types/node/NodeData"
 
-const API_URL = "http://localhost:8000";
+const API_URL = "http://localhost:8000/api/v1";
 
 export async function sendMessage(prompt: Prompt): Promise<NodeData> {
-  const reply = await fetch(`${API_URL}/api`, {
+  const reply = await fetch(`${API_URL}/graphs/0/nodes`, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify(prompt),

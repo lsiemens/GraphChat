@@ -1,4 +1,4 @@
-#API servers
+# API servers
 Here I have code defining API servers for GraphChat using either my custom http
 server `api_server.py` or using FastAPI and Pydantic `fastAPI_server.py`. The
 core of the server (common to both) is `server_core.py` and should be
@@ -14,7 +14,7 @@ the user. For now lets fix graph_id to be zero.
 
 - GET  /graphs : List all available graphs
 - POST /graphs : Create new graph
-- GET  /graphs/{graph_id} : Get metadata and stats
+- GET  /graphs/{graph_id} : Get metadata (title, description, ...)
 
 ### Nodes
 
@@ -30,4 +30,4 @@ the user. For now lets fix graph_id to be zero.
 ### General
 
 - GET /system/models : Get available models
-- GET /graphs/{graph_id}/stats : Get graph wide usage and statistics
+- GET /graphs/{graph_id}/stats : Get graph wide usage and statistics (total cost, tokens)
