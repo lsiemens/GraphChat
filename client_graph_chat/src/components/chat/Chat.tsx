@@ -9,10 +9,6 @@ export function Chat() {
 
   return (
     <div className={styles.chat}>
-      <header>
-        <h2>Chat</h2>
-      </header>
-      
       <ChatChain nodes={nodes} />
 
       {error && (<div>{error}</div>)}

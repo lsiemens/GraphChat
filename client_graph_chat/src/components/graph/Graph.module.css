@@ -1,0 +1,26 @@
+.graph {
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.graph-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: var(--padding);
+}
+
+.graph-view {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  border: var(--border-size) solid var(--border);
+}
+
+.graph-info {
+  flex-shrink: 0;
+}
