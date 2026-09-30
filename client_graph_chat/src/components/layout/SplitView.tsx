@@ -8,11 +8,11 @@ type Props = {
 
 export function SplitView({ left, right }: Props) {
   return (
-    <Group className={styles.group} orientation="horizontal">
+    <Group className={styles["group"]} orientation="horizontal">
       <Panel defaultSize="40%" minSize="20%" collapsible collapsedSize="0%">
         {left}
       </Panel>
-      <Separator className={styles.separator} />
+      <Separator className={styles["separator"]} />
       <Panel minSize="20%">
         {right}
       </Panel>

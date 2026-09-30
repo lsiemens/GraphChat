@@ -7,13 +7,13 @@ interface Props {
 
 export function ChatNode({ node }: Props) {
   return (
-    <div className={styles.node}>
-      <div className={styles.request}>
+    <div className={styles["node"]}>
+      <div className={styles["request"]}>
         {node.request}
       </div>
 
       {node.reply !== null && (
-        <div className={styles.reply}>
+        <div className={styles["reply"]}>
           {node.reply}
         </div>
       )}

@@ -9,7 +9,7 @@
     "skipLibCheck": true,
     "paths": {"@/*": ["./src/*"]},
 
-    // Strict Type Checking
+    /* Strict Type Checking */
     "strict": true,
     "alwaysStrict": true,
     "noImplicitAny": true,
@@ -20,7 +20,7 @@
     "strictPropertyInitialization": true,
     "useUnknownInCatchVariables": true,
 
-    // Additional Checks
+    /* Additional Checks */
     "noUnusedLocals": true,
     "noImplicitReturns": true,
     "noImplicitOverride": true,

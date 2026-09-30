@@ -8,7 +8,7 @@ export function Chat() {
   const {nodes, sendNode, isSending, error} = useChat();
 
   return (
-    <div className={styles.chat}>
+    <div className={styles["chat"]}>
       <ChatChain nodes={nodes} />
 
       {error && (<div>{error}</div>)}

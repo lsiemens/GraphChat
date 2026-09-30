@@ -14,11 +14,13 @@ export function useChat() {
     setIsSending(true);
 
     try {
+      const lastNode = nodes[nodes.length - 1];
+
       // # TODO properly set the context
-      if (nodes.length > 0) {
-        prompt.upstream = [ nodes[nodes.length - 1].id ]
+      if (lastNode === undefined) {
+        prompt.upstream = [];
       } else {
-        prompt.upstream = []
+        prompt.upstream = [ lastNode.id ];
       }
       const newNode = await sendMessage(prompt);
 

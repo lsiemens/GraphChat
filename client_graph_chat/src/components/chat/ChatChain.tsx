@@ -8,7 +8,7 @@ interface Props {
 
 export function ChatChain({ nodes }: Props) {
   return (
-    <div className={styles.nodes}>
+    <div className={styles["nodes"]}>
       {nodes.map((node) => (
         <ChatNode key={node.id} node={node} />
       ))}

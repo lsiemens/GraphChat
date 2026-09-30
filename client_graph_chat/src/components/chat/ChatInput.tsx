@@ -37,8 +37,8 @@ export function ChatInput({ onSend, disabled = false }: Props) {
 
   // TODO add proper handling of disabled
   return (
-    <div className={styles.input}>
-      <div className={styles.textarea}>
+    <div className={styles["input"]}>
+      <div className={styles["textarea"]}>
         <textarea
           value={text}
           onChange={(event) => setText(event.target.value)}
@@ -49,7 +49,7 @@ export function ChatInput({ onSend, disabled = false }: Props) {
         />
       </div>
 
-      <div className={styles.controls}>
+      <div className={styles["controls"]}>
         <button type="button" disabled={disabled}>
           Settings 
         </button>

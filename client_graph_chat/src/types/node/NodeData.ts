@@ -26,11 +26,11 @@ export function isNodeData(value: unknown): value is NodeData {
   if (!isRecord(value)) return false;
 
   return (
-    typeof value.id === "string" &&
-    isStringArray(value.upstream) &&
-    typeof value.request === "string" &&
-    typeof value.reply === "string" &&
-    typeof value.model === "string" &&
-    typeof value.costUSD === "number" || typeof value.costUSD === null
+    typeof value["id"] === "string" &&
+    isStringArray(value["upstream"]) &&
+    typeof value["request"] === "string" &&
+    typeof value["reply"] === "string" &&
+    typeof value["model"] === "string" &&
+    typeof value["costUSD"] === "number" || typeof value["costUSD"] === null
   );
 }
