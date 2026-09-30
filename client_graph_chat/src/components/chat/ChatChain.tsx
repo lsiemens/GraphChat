@@ -1,4 +1,4 @@
-import type { NodeData, NodeRequest } from "@/types";
+import type { NodeData } from "@/types";
 import { ChatNode } from "./ChatNode";
 import styles from "./ChatChain.module.css"
 

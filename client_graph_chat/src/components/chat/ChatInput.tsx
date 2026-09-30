@@ -3,10 +3,11 @@ import type { Prompt } from "@/types";
 import styles from "./ChatInput.module.css"
 
 interface Props {
-  onSend: (prompt: Prompt) => void;
+  onSend: (prompt: Prompt) => Promise<void>;
+  disabled?: boolean;
 }
 
-export function ChatInput({ onSend }: Props) {
+export function ChatInput({ onSend, disabled = false }: Props) {
   const [text, setText] = useState("");
 
   function handleSubmit() {
@@ -34,6 +35,7 @@ export function ChatInput({ onSend }: Props) {
     }
   }
 
+  // TODO add proper handling of disabled
   return (
     <div className={styles.input}>
       <div className={styles.textarea}>
@@ -43,11 +45,12 @@ export function ChatInput({ onSend }: Props) {
           onKeyDown={handleKeyDown}
           placeholder="Ask anything"
           rows={3}
+          disabled={disabled}
         />
       </div>
 
       <div className={styles.controls}>
-        <button type="button">
+        <button type="button" disabled={disabled}>
           Settings 
         </button>
         <button type="button" onClick={handleSubmit} disabled={!text.trim()}>

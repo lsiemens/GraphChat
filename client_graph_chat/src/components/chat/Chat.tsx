@@ -1,5 +1,5 @@
 import { useChat } from "@/hooks/useChat";
-import type { NodeData } from "@/types";
+//import type { NodeData } from "@/types";
 import { ChatChain } from "./ChatChain";
 import { ChatInput } from "./ChatInput";
 import styles from "./Chat.module.css"
@@ -13,7 +13,7 @@ export function Chat() {
 
       {error && (<div>{error}</div>)}
 
-      <ChatInput onSend={sendNode} disable={isSending} />
+      <ChatInput onSend={sendNode} disabled={isSending} />
     </div>
   );
 }

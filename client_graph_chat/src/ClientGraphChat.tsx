@@ -1,7 +1,7 @@
 import { SplitView } from "./components/layout/SplitView"
 import { Chat } from "./components/chat/Chat"
 import { Graph } from "./components/graph/Graph"
-import './ClientGraphChat.css'
+import "./ClientGraphChat.css"
 
 function ClientGraphChat() {
   return (
