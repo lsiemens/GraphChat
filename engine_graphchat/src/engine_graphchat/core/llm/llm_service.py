@@ -4,6 +4,7 @@ The interface with xAI using the xai-sdk
 
 import logging
 import grpc
+import time
 
 import xai_sdk
 
@@ -58,18 +59,36 @@ class LLM_Chat:
     Manage a chat with language model from a LLM service
     """
 
+    _MAX_RETRIES = 6
+
     def __init__(self, chat):
         self._chat = chat
+
+    def _sample(self):
+        """sample LLM with resource management
+        """
+
+        for attempt in range(self._MAX_RETRIES):
+            # only sleep between attempts not before or after each attempt
+            if attempt != 0:
+                time.sleep(2**(attempt - 1))
+
+            try:
+                return self._chat.sample()
+            except grpc.RpcError as e:
+                if e.code() != grpc.StatusCode.RESOURCE_EXHAUSTED:
+                    logger.exception("Unrecoverable RPC error.")
+                    raise LLM_ERROR("Unrecoverable RPC error.") from e
+                logger.warning("RPC resource exhausted: attempt %d of %d", attempt + 1, self._MAX_RETRIES)
+        logger.error("RPC resource exhausted: Reached maximum retries.")
+        raise LLM_ERROR("Failed to generate a sample from the LLM.")
 
     def send_node_request(self, node_request):
         user_msg = xai_sdk.chat.user(node_request.content)
         self._chat.append(user_msg)
 
-        try:
-            reply = self._chat.sample()
-        except grpc.RpcError:
-            logger.exception("RPC connection error.")
-            raise
+        # may raise LLM_ERROR
+        reply = self._sample()
 
         if reply.finish_reason != "REASON_STOP":
             raise LLM_ERROR("LLM: Failed to generate a full reply!")
