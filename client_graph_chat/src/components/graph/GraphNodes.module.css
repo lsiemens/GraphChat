@@ -1,0 +1,5 @@
+.node {
+  padding: var(--padding);
+  background: var(--bg);
+  border: var(--border-size) solid var(--border);
+}
