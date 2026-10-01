@@ -18,7 +18,7 @@ class PromptAPI(BaseModel):
         return node_data
 
 
-class NodeDataApi(BaseModel):
+class NodeDataAPI(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     # TODO check can I add code to validate that the classes here match the ones in `api_types.py`
@@ -36,3 +36,13 @@ class NodeDataApi(BaseModel):
         self.reply = node_data.reply.content
         self.model = node_data.model
         self.costUSD = node_data.reply.usage.cost_USD
+
+
+class NodeIDsAPI(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    # TODO check can I add code to validate that the classes here match the ones in `api_types.py`
+    ids: list[str] = []
+
+    def from_strings(self, strings: list[str]):
+        self.ids = strings
