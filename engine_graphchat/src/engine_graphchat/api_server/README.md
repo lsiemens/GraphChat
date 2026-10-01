@@ -6,4 +6,4 @@ independent of details of the http.
 
 # API Specification
 See the [shared API interface contract](/docs/API.md) for the
-specification of intended endpoints and request/response schemas.
+specification of intended endpoints and request/response structure.
