@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Prompt } from "@/types";
+import type { Prompt } from "@/client-driver/api/NodeData";
 import styles from "./ChatInput.module.css"
 
 interface Props {

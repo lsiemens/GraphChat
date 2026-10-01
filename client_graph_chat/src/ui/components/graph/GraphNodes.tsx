@@ -1,7 +1,7 @@
 import { Position, Handle } from "@xyflow/react";
 import type { Node, NodeProps, XYPosition } from "@xyflow/react";
-import type { Prompt, NodeData } from "@/types"
-import styles from "./GraphNodes.module.css"
+import type { Prompt, NodeData } from "@/client-driver/api/NodeData";
+import styles from "./GraphNodes.module.css";
 
 type PromptNode = Node<{ prompt: Prompt }, "promptNode">;
 type FullNode = Node<{ nodeData: NodeData }, "fullNode">;

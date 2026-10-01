@@ -1,4 +1,4 @@
-import type { NodeData } from "@/types";
+import type { NodeData } from "@/client-driver/api/NodeData";
 import { ChatNode } from "./ChatNode";
 import styles from "./ChatChain.module.css"
 

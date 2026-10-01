@@ -1,5 +1,4 @@
-import { useChat } from "@/hooks/useChat";
-//import type { NodeData } from "@/types";
+import { useChat } from "@/ui/hooks/useChat";
 import { ChatChain } from "./ChatChain";
 import { ChatInput } from "./ChatInput";
 import styles from "./Chat.module.css"

@@ -1,4 +1,4 @@
-import type { NodeData } from "@/types";
+import type { NodeData } from "@/client-driver/api/NodeData";
 import styles from "./ChatNode.module.css"
 
 interface Props {
