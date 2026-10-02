@@ -1,4 +1,6 @@
-import { Prompt, Node, type NodeID, toNodeID, toNodeIDs, fromNodeIDs } from "@/types"
+import { Prompt, Node } from "@/types"
+import { type NodeID, toNodeID, toNodeIDs, fromNodeIDs } from "@/types"
+import { type ModelName, toModelName, toModelNames, fromModelName } from "@/types"
 
 /* API Interfaces */
 
@@ -20,6 +22,10 @@ interface PromptAPI {
 
 interface NodeIDsAPI {
   ids: string[];
+}
+
+interface ModelNamesAPI {
+  models: string[];
 }
 
 /* Type Validation */
@@ -51,6 +57,12 @@ function isNodeIDsAPI(value: unknown): value is NodeIDsAPI {
   return isStringArray(value["ids"]);
 }
 
+function isModelNamesAPI(value: unknown): value is ModelNamesAPI {
+  if (!isRecord(value)) return false;
+
+  return isStringArray(value["models"]);
+}
+
 /* Internal Type Conversion */
 
 function toNodeAPI(input: unknown): NodeAPI {
@@ -69,6 +81,14 @@ function toNodeIDsAPI(input: unknown): NodeIDsAPI {
   return input;
 }
 
+function toModelNamesAPI(input: unknown): ModelNamesAPI {
+  if (!isModelNamesAPI(input)) {
+    throw new Error("Input data did not match ModelNamesAPI");
+  }
+
+  return input;
+}
+
 /* Type Convsion */
 
 export function apiToNode(input: unknown): Node {
@@ -79,7 +99,7 @@ export function apiToNode(input: unknown): Node {
     upstream: toNodeIDs(nodeAPI.upstream),
     request: nodeAPI.request,
     reply: nodeAPI.reply,
-    model: nodeAPI.model,
+    model: toModelName(nodeAPI.model),
     costUSD: nodeAPI.costUSD,
   };
   return new Node(data);
@@ -87,7 +107,7 @@ export function apiToNode(input: unknown): Node {
 
 export function apiFromPrompt(prompt: Prompt): PromptAPI {
   const data = {
-    model: prompt.model,
+    model: fromModelName(prompt.model),
     upstream: fromNodeIDs(prompt.upstream),
     timestamp: new Date().toISOString(),
     content: prompt.content,
@@ -100,4 +120,10 @@ export function apiToNodeIDs(input: unknown): NodeID[] {
   const nodeIDsAPI = toNodeIDsAPI(input);
 
   return toNodeIDs(nodeIDsAPI.ids);
+}
+
+export function apiToModelNames(input: unknown): ModelName[] {
+  const modelNamesAPI = toModelNamesAPI(input);
+
+  return toModelNames(modelNamesAPI.models);
 }

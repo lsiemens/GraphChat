@@ -30,29 +30,35 @@ class GraphChatServer:
         label, url_parameters = self.rout_URL(target)
 
         # --- Enter Internal CORE --- #
+        JSON_reply = "{}"
         match label:
             case "graphs_F_nodes":
-                #node_id_list = self._server_core.GET_graphs_F_nodes()
-                #node_data_api = api_types.NodeDataApi()
-                #node_data_api.from_NodeData(reply_node_data)
-                #JSON_reply = api_json.dump_JSON_as_type(node_data_api, api_types.NodeDataApi)
-                http_middleware.set_simple_reply(501, "", "", HTTP_reply)
-                return
+                reply_node_ids = self._server_core.GET_graphs_F_nodes()
+                node_ids_api = api_types.NodeIDsAPI()
+                node_ids_api.from_strings(reply_node_ids)
+                JSON_reply = api_json.dump_JSON_as_type(node_ids_api, api_types.NodeIDsAPI)
+
             case "graphs_F_nodes_F":
-                http_middleware.set_simple_reply(501, "", "", HTTP_reply)
-                return
+                node_id = url_parameters["node_id"]
+                reply_node_data = self._server_core.GET_graphs_F_nodes_F(node_id)
+                node_data_api = api_types.NodeDataApi()
+                node_data_api.from_NodeData(reply_node_data)
+                JSON_reply = api_json.dump_JSON_as_type(node_data_api, api_types.NodeDataApi)
+
             case "graphs_F_nodes_F_info":
                 http_middleware.set_simple_reply(501, "", "", HTTP_reply)
                 return
             case "system_models":
-                http_middleware.set_simple_reply(501, "", "", HTTP_reply)
-                return
+                reply_models = self._server_core.GET_system_models()
+                models_api = api_types.ModelNamesAPI()
+                models_api.from_strings(reply_models)
+                JSON_reply = api_json.dump_JSON_as_type(models_api, api_types.ModelNamesAPI)
+
             case _:
                 http_middleware.set_simple_reply(501, "", "", HTTP_reply)
                 return
         # --- Exit Internal CORE --- #
 
-        JSON_reply = "{}"
         http_middleware.set_simple_reply(200, JSON_reply, ".json", HTTP_reply)
 
     def POST(self, HTTP_request, HTTP_reply):

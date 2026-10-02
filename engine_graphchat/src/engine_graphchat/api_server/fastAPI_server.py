@@ -52,4 +52,8 @@ def GET_graphs_F_nodes_F_info(graph_id: str, node_id: str):
 # General info
 @api.get(_BASE_URL + "/system/models")
 def GET_system_models():
-    raise HTTPException(status_code=501)
+    reply_models = _server_core.GET_system_models()
+    models_api = pydantic_types.ModelNamesAPI()
+    models_api.from_strings(reply_models)
+
+    return models_api

@@ -37,4 +37,4 @@ class ServerCore:
         pass
 
     def GET_system_models(self):
-        pass
+        return self.DM.llm_service.get_model_names()

@@ -1,4 +1,5 @@
 export * from "./Vec2"
 export * from "./NodeID"
+export * from "./ModelName"
 export * from "./Prompt"
 export * from "./Node"

@@ -1,14 +1,17 @@
+import { toModelName } from "./types"
+import { HTTPEngineAPI } from "./client-driver/api/HTTPEngineAPI"
+import { useClientDriver } from "./ui/hooks/useClientDriver"
+
 import { SplitView } from "./ui/components/layout/SplitView"
 import { Chat } from "./ui/components/chat/Chat"
 import { Graph } from "./ui/components/graph/Graph"
-import { HTTPEngineAPI } from "./client-driver/api/HTTPEngineAPI"
-import { useClientDriver } from "./ui/hooks/useClientDriver"
 import "./ClientGraphChat.css"
 
 function ClientGraphChat() {
+  const model = toModelName("Grok-4.20");
   const api = new HTTPEngineAPI({host:"http://localhost", port:"8000", apiBase:"/api/v1"});
-  const driver = useClientDriver(api);
-  console.log("useDriver.model: " + driver.prompt.model);
+  const driver = useClientDriver(api, model);
+  console.log("useDriver.models: " + driver.models);
 
   return (
     <>

@@ -42,3 +42,23 @@ class NodeDataApi:
         self.reply = node_data.reply.content
         self.model = node_data.model
         self.costUSD = node_data.reply.usage.cost_USD
+
+
+class NodeIDsAPI:
+    ids: list[str]
+
+    def __init__(self):
+        self.ids = None
+
+    def from_strings(self, ids):
+        self.ids = ids
+
+
+class ModelNamesAPI:
+    models: list[str]
+
+    def __init__(self):
+        self.models = None
+
+    def from_strings(self, models):
+        self.models = models

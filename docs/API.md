@@ -185,4 +185,22 @@ The `node_id` in the request should match the `Node.id` in the response.
 Not yet defined.
 
 ### General
-Not yet defined.
+
+#### Get Models
+
+Send a `GET` request to `/system/models`. The response contains the names of all
+available models.
+
+```
+{
+  "title": "List model names",
+  "type": "object",
+  "properties": {
+    "models": {
+      "type": "array",
+      "description": "A list of all of the available models",
+      "items": {
+        "type": "string" }}},
+  "additionalProperties": false,
+}
+```

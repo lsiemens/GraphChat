@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react"
-import { ClientDriver } from "@/client-driver/ClientDriver"
+import type { ModelName } from "@/types"
 import type { EngineAPI } from "@/client-driver/api/EngineAPI"
 
-export function useClientDriver(api: EngineAPI): ClientDriver {
-  const [driver] = useState(() => new ClientDriver(api));
+import { useState, useEffect } from "react"
+import { ClientDriver } from "@/client-driver/ClientDriver"
+
+export function useClientDriver(api: EngineAPI, model: ModelName): ClientDriver {
+  const [driver] = useState(() => new ClientDriver(api, model));
 
   useEffect(() => {
     void driver.initialize();

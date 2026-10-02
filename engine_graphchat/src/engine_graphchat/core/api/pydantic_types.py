@@ -3,10 +3,10 @@ from pydantic import BaseModel, ConfigDict
 from engine_graphchat.core.dag import node
 
 
+# TODO check can I add code to validate that the classes here match the ones in `api_types.py`
 class PromptAPI(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
-    # TODO check can I add code to validate that the classes here match the ones in `api_types.py`
     model: str = ""
     upstream: list[str] = []
     timestamp: str = ""
@@ -21,7 +21,6 @@ class PromptAPI(BaseModel):
 class NodeDataAPI(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
-    # TODO check can I add code to validate that the classes here match the ones in `api_types.py`
     id: str = ""
     upstream: list[str] = []
     request: str = ""
@@ -41,8 +40,16 @@ class NodeDataAPI(BaseModel):
 class NodeIDsAPI(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
-    # TODO check can I add code to validate that the classes here match the ones in `api_types.py`
     ids: list[str] = []
 
-    def from_strings(self, strings: list[str]):
-        self.ids = strings
+    def from_strings(self, ids: list[str]):
+        self.ids = ids
+
+
+class ModelNamesAPI(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    models: list[str] = []
+
+    def from_strings(self, models: list[str]):
+        self.models = models

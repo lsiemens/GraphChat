@@ -1,6 +1,6 @@
-import { Prompt, Node, type NodeID, fromNodeID } from "@/types"
+import { Prompt, Node, type NodeID, type ModelName, fromNodeID } from "@/types"
 import type { EngineAPI } from "./EngineAPI"
-import { apiToNode, apiFromPrompt, apiToNodeIDs } from "./APITypes"
+import { apiToNode, apiFromPrompt, apiToNodeIDs, apiToModelNames } from "./APITypes"
 
 interface HTTPEngineAPIArgs {
   host: string,
@@ -38,13 +38,12 @@ export class HTTPEngineAPI implements EngineAPI {
       throw new Error(`Failed to send prompt to the GraphChat engine: ${reply.status}`);
     }
 
-    let json_text = await reply.text();
-    const raw: unknown = JSON.parse(json_text);
+    const raw: unknown = await reply.json();
 
     try {
       return apiToNode(raw);
-    } catch {
-      throw new Error("Failed to parse the HTTP reply from the GraphChat engine");
+    } catch (err) {
+      throw new Error("Failed to parse the HTTP reply from the GraphChat engine", {cause: err});
     }
   }
 
@@ -60,13 +59,12 @@ export class HTTPEngineAPI implements EngineAPI {
       throw new Error(`Failed to send prompt to the GraphChat engine: ${reply.status}`);
     }
 
-    let json_text = await reply.text();
-    const raw: unknown = JSON.parse(json_text);
+    const raw: unknown = await reply.json();
 
     try {
       return apiToNodeIDs(raw);
-    } catch {
-      throw new Error("Failed to parse the HTTP reply from the GraphChat engine");
+    } catch (err) {
+      throw new Error("Failed to parse the HTTP reply from the GraphChat engine", {cause: err});
     }
   }
 
@@ -82,13 +80,33 @@ export class HTTPEngineAPI implements EngineAPI {
       throw new Error(`Failed to send prompt to the GraphChat engine: ${reply.status}`);
     }
 
-    let json_text = await reply.text();
-    const raw: unknown = JSON.parse(json_text);
+    const raw: unknown = await reply.json();
 
     try {
       return apiToNode(raw);
-    } catch {
-      throw new Error("Failed to parse the HTTP reply from the GraphChat engine");
+    } catch (err) {
+      throw new Error("Failed to parse the HTTP reply from the GraphChat engine", {cause: err});
+    }
+  }
+
+  async getModels(): Promise<ModelName[]> {
+    const URL = `${this.API_URL}/system/models`;
+    const request = {
+      method: "GET",
+    };
+
+    const reply = await fetch(URL, request);
+
+    if (!reply.ok) {
+      throw new Error(`Failed to send prompt to the GraphChat engine: ${reply.status}`);
+    }
+
+    const raw: unknown = await reply.json();
+
+    try {
+      return apiToModelNames(raw);
+    } catch (err) {
+      throw new Error("Failed to parse the HTTP reply from the GraphChat engine", {cause: err});
     }
   }
 }

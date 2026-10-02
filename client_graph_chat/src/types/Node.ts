@@ -1,12 +1,13 @@
 import { Vec2 } from "./Vec2"
 import type { NodeID } from "./NodeID"
+import type { ModelName } from "./ModelName"
 
 interface NodeArgs {
   id: NodeID,
   upstream: NodeID[],
   request: string,
   reply: string,
-  model: string,
+  model: ModelName,
   costUSD: number | null,
   position?: Vec2,
 }
@@ -16,7 +17,7 @@ export class Node {
   readonly upstream: readonly NodeID[];
   readonly request: string;
   readonly reply: string;
-  readonly model: string;
+  readonly model: ModelName;
   readonly costUSD: number | null;
   public position: Vec2;
 

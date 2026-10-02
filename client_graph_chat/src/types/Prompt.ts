@@ -1,15 +1,16 @@
 import { Vec2 } from "./Vec2"
 import type { NodeID } from "./NodeID"
+import type { ModelName } from "./ModelName"
 
 interface PromptArgs {
-  model: string,
+  model: ModelName,
   upstream?: NodeID[],
   content?: string,
   position?: Vec2,
 }
 
 export class Prompt {
-  public model: string;
+  public model: ModelName;
   public upstream: NodeID[];
   public content: string;
   public position: Vec2;
