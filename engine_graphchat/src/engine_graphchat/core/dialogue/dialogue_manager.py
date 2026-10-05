@@ -38,7 +38,13 @@ class DialogueManager:
 
         Generate a response from the LLM and as a node to the graph.
         """
-        messages = [self.graph.nodes[node_id] for node_id in self._state.request.context]
+        messages = []
+        for node_id in self._state.request.context:
+            node = self.graph.nodes[node_id]
+            # note node_to_xAI_messages produces a pair of messages but messages
+            # for new_chat must be a flat list
+            messages += llm_service.node_to_xAI_messages(node)
+
         self.chat = self.llm_service.new_chat(self._state.model, messages)
         reply = self.chat.send_node_request(self._state.request)
         self._state.reply = reply
