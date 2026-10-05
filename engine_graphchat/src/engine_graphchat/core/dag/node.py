@@ -21,6 +21,8 @@ class NodeData:
             raise ValueError("Can not generate node ID, upstream is None")
         if self.request is None:
             raise ValueError("Can not generate node ID, request is None")
+        if self.request.context is None:
+            raise ValueError("Can not generate node ID, request.context is None")
         if self.request.content is None:
             raise ValueError("Can not generate node ID, request.content is None")
         if self.reply is None:
@@ -28,7 +30,7 @@ class NodeData:
         if self.reply.content is None:
             raise ValueError("Can not generate node ID, reply.content is None")
 
-        identifying_data = f"{self.model}|{self.request.content}|{self.upstream}|{self.reply.content}"
+        identifying_data = f"{self.model}|{self.upstream}|{self.request.context}|{self.request.content}|{self.reply.content}"
         identifying_data = identifying_data.encode(self._ENCODING)
 
         return hashlib.sha256(identifying_data).hexdigest()
@@ -46,12 +48,14 @@ class NodeData:
 
 
 class NodeRequest:
-    def __init__(self, timestamp, content):
+    def __init__(self, timestamp, context, content):
         self.timestamp = timestamp
+        self.context = context
         self.content = content
 
     def __str__(self):
         return f"NodeRequest: timestamp: {self.timestamp}, " \
+               f"context: {self.context}, " \
                f"content: {self.content}"
 
 

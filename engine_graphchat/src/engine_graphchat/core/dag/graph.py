@@ -51,7 +51,7 @@ class Graph:
             A list of NodeData with a topological ordering.
         """
 
-        L = []
+        ordered = []
         visited = set()
 
         def visit(node_id):
@@ -59,7 +59,7 @@ class Graph:
                 raise GraphError("Nodes reference elements not in the DAG.")
 
             node = self.nodes[node_id]
-            if node_id in L:
+            if node_id in ordered:
                 return
 
             if node_id in visited:
@@ -71,12 +71,12 @@ class Graph:
                 visit(p_node_id)
 
             visited.remove(node_id)
-            L.append(node_id)
+            ordered.append(node_id)
 
         for upstream_node_id in upstream:
             visit(upstream_node_id)
 
-        return [self.nodes[node_id] for node_id in L]
+        return ordered
 
     def terminal_nodes(self, node_id):
         """Find the terminal decendant nodes
@@ -102,4 +102,47 @@ class Graph:
                 continue
 
             test_node_id += children[node_id]
-        return [self.nodes[node_id] for node_id in terminal_node_id]
+
+        return list(terminal_node_id)
+
+    def is_topological_ordering(self, context):
+        """Check if a proposed context is topologically ordered
+        """
+        partial_context = []
+        for node_id in context:
+            for upstream_id in self.nodes[node_id].upstream:
+                if upstream_id not in partial_context:
+                    return False
+            partial_context.append(node_id)
+        return True
+
+    def is_valid_context(self, upstream, context):
+        """Check that the upstream and context are compatible
+        """
+
+        if len(set(context)) != len(context):
+            return False
+
+        traversable = set()
+
+        # DFS
+        def visit(node_id):
+            if node_id not in self.nodes:
+                raise GraphError("Nodes reference elements not in the DAG.")
+
+            if node_id in traversable:
+                return
+
+            node = self.nodes[node_id]
+            for p_node_id in node.upstream:
+                visit(p_node_id)
+
+            traversable.add(node_id)
+
+        for p_node_id in upstream:
+            visit(p_node_id)
+
+        if traversable != set(context):
+            return False
+
+        return True

@@ -4,17 +4,19 @@ from engine_graphchat.core.dag import node
 class PromptAPI:
     model: str
     upstream: list[str]
+    context: list[str]
     timestamp: str
     content: str
 
     def __init__(self):
         self.model = None
         self.upstream = None
+        self.context = None
         self.timestamp = None
         self.content = None
 
     def to_NodeData(self):
-        node_request = node.NodeRequest(self.timestamp, self.content)
+        node_request = node.NodeRequest(self.timestamp, self.context, self.content)
         node_data = node.NodeData(None, self.model, self.upstream, node_request, None)
         return node_data
 
@@ -22,6 +24,7 @@ class PromptAPI:
 class NodeDataApi:
     id: str
     upstream: list[str]
+    context: list[str]
     request: str
     reply: str
     model: str
@@ -29,7 +32,8 @@ class NodeDataApi:
 
     def __init__(self):
         self.id = None
-        self.ustream = None
+        self.upstream = None
+        self.context = None
         self.request = None
         self.reply = None
         self.model = None
@@ -38,6 +42,7 @@ class NodeDataApi:
     def from_NodeData(self, node_data):
         self.id = node_data.id
         self.upstream = node_data.upstream
+        self.context = node_data.request.context
         self.request = node_data.request.content
         self.reply = node_data.reply.content
         self.model = node_data.model

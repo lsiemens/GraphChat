@@ -85,6 +85,11 @@ that all `upstream` nodes must already exist the result is a DAG.
       "description": "A list of the IDs of the upstream nodes",
       "items": {
         "type": "NodeID" }},
+    "context": {
+      "type": "array",
+      "description": "A list of the IDs of the context as presented to the LLM",
+      "items": {
+        "type": "NodeID" }},
     "request": {
       "type": "string",
       "description": "The user's prompt" },
@@ -123,6 +128,11 @@ generates the node's reply and ID.
     "upstream": {
       "type": "array",
       "description": "A list of the IDs of existing upstream nodes",
+      "items": {
+        "type": "NodeID" }},
+    "context": {
+      "type": "array",
+      "description": "A list of the IDs defining the context for the prompt",
       "items": {
         "type": "NodeID" }},
     "timestamp": {

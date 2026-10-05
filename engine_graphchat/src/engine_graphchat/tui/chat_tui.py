@@ -41,8 +41,8 @@ class Chat_TUI:
             return True
 
         if prompt.lower() == "refresh":
-            for node in self.DM.LOG():
-                self.print_node(node, reply_only=False)
+            for node_id in self.DM.LOG():
+                self.print_node(self.DM.graph.nodes[node_id], reply_only=False)
             return True
 
         if prompt.lower().startswith("merge "):
@@ -70,6 +70,7 @@ class Chat_TUI:
         if prompt.lower() == "status":
             node_text = f"`Proposed Node`: `Model`: \"{self.DM._state.model}\"  \n"
             node_text += f"`Upstream`: {[node_id[:self._ID_chars] for node_id in self.DM._state.upstream]}  \n"
+            node_text += f"`Context`: {[node_id[:self._ID_chars] for node_id in self.DM.LOG()]}  \n"
             node_text += f"`Prompt`: \"{self.DM._state.request.content[:100]}\"  \n"
             if self.DM._HEAD is not None:
                 node_text += f"`HEAD`: {self.DM._HEAD[:self._ID_chars]}"

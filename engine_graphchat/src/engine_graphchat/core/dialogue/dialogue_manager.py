@@ -27,7 +27,6 @@ class DialogueManager:
         self._chat = None
 
         self._HEAD = None
-        self._messages = []
 
         if model_name is None:
             model_name = self.llm_service.get_model_names()[0]
@@ -39,7 +38,8 @@ class DialogueManager:
 
         Generate a response from the LLM and as a node to the graph.
         """
-        self.chat = self.llm_service.new_chat(self._state.model, self._messages)
+        messages = [self.graph.nodes[node_id] for node_id in self._state.request.context]
+        self.chat = self.llm_service.new_chat(self._state.model, messages)
         reply = self.chat.send_node_request(self._state.request)
         self._state.reply = reply
         self._state.id = self._state.hash()
@@ -47,9 +47,12 @@ class DialogueManager:
         self._HEAD = None
         node_data = self._state
         self.graph.add_node(node_data)
+
         self._state = graph_utils.empty_node(node_data.model)
-        self._state.upstream = [node_data.id]
-        self._update()
+        upstream = [node_data.id]
+        context = node_data.request.context + [node_data.id]
+        self.set_context(upstream, context)
+
         return node_data
 
     def CHECKOUT(self, target):
@@ -69,23 +72,24 @@ class DialogueManager:
             if self._HEAD not in self.graph.nodes:
                 raise ValueError("_HEAD is not in the graph!")
 
-            tip_nodes = self.graph.terminal_nodes(self._HEAD)
-            if len(tip_nodes) != 1:
+            tip_node_ids = self.graph.terminal_nodes(self._HEAD)
+            if len(tip_node_ids) != 1:
                 raise ValueError("No unique tip node")
-            tip_node = tip_nodes[0]
+            tip_node = self.graph.nodes[tip_node_ids[0]]
 
             # configure the state like just after a commit
             self._HEAD = None
             self._state = graph_utils.empty_node(tip_node.model)
-            self._state.upstream = [tip_node.id]
-            self._update()
+
+            upstream = [tip_node.id]
+            context = tip_node.request.context + [tip_node.id]
+            self.set_context(upstream, context)
             return
 
         node = self.graph.nodes[self._get_ID(target)]
 
         self._HEAD = node.id
         self._state = graph_utils.copy_node(node)
-        self._update()
 
     def MERGE(self, target):
         """Merge nodes
@@ -97,14 +101,16 @@ class DialogueManager:
             will be merged into the current state. If `target` is a list, then
             each node IDs or ID prefixes will be merged into the current state.
         """
+        upstream = self._state.upstream[:]
         if isinstance(target, list):
-            self._state.upstream += [self._get_ID(id_prefix) for id_prefix in target]
+            upstream += [self._get_ID(id_prefix) for id_prefix in target]
         else:
-            self._state.upstream.append(self._get_ID(target))
-        self._update()
+            upstream.append(self._get_ID(target))
+
+        self.set_upstream(upstream)
 
     def LOG(self):
-        return self.graph.topological_ordering(self._state.upstream)
+        return self._state.request.context
 
     def set_prompt(self, prompt, timestamp=None):
         self._state.request.content = prompt
@@ -117,20 +123,25 @@ class DialogueManager:
     def set_model(self, model_name):
         self._state.model = model_name
 
-    def set_upstream(self, upstream):
+    def set_context(self, upstream, context):
         upstream = [self._get_ID(id_prefix) for id_prefix in upstream]
+        context = [self._get_ID(id_prefix) for id_prefix in context]
+
+        if not self.graph.is_valid_context(upstream, context):
+            raise ValueError("Invalid context: the context is incompatible with the provided upstream nodes")
+
+        if not self.graph.is_topological_ordering(context):
+            raise ValueError("Invalid context: the context must be topologically ordered")
 
         self._HEAD = None
         self._state.upstream = upstream
-        self._update()
+        self._state.request.context = context
 
-    def _update(self):
-        """Keep _messages up to date with the current settings
-        """
-        self._messages = []
-        sorted_nodes = self.graph.topological_ordering(self._state.upstream)
-        for node in sorted_nodes:
-            self._messages += llm_service.node_to_xAI_messages(node)
+    def set_upstream(self, upstream):
+        upstream = [self._get_ID(id_prefix) for id_prefix in upstream]
+        context = self.graph.topological_ordering(upstream)
+
+        self.set_context(upstream, context)
 
     def _get_ID(self, target):
         target = target.strip()
