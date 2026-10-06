@@ -99,4 +99,13 @@ async def exception_handler(request: Request, exc: exceptions.GraphChatError):
     content = {"message": message}
     return JSONResponse(status_code=status, content=content)
 
+
+def custom_openapi():
+    if not api.openapi_schema:
+        api.openapi_schema = _server_core.openapi_schema
+    return api.openapi_schema
+
+
+api.openapi = custom_openapi
+
 # TODO add error logging for when pydantic fails to validate response or reply object

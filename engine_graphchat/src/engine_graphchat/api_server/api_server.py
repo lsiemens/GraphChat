@@ -10,20 +10,28 @@ class GraphChatServer:
 
     def __init__(self, CORS_settings):
         self._server_core = server_core.ServerCore()
+        self._openapi_json = api_json.json.dumps(self._server_core.openapi_schema)
 
         self.set_CORS_headers = http_middleware.configure_CORS(*CORS_settings)
 
-        route_patterns = {"graphs_F_nodes": "/graphs/{graph_id}/nodes",
-                          "graphs_F_nodes_F": "/graphs/{graph_id}/nodes/{node_id}",
-                          "graphs_F_nodes_F_info": "/graphs/{graph_id}/nodes/{node_id}/info",
-                          "graphs_F_views": "/graphs/{graph_id}/views",
-                          "graphs_F_views_F": "/graphs/{graph_id}/views/{view_name}",
-                          "system_models": "/system/models"}
+        route_patterns = {
+            "graphs_F_nodes": "/graphs/{graph_id}/nodes",
+            "graphs_F_nodes_F": "/graphs/{graph_id}/nodes/{node_id}",
+            "graphs_F_nodes_F_info": "/graphs/{graph_id}/nodes/{node_id}/info",
+            "graphs_F_views": "/graphs/{graph_id}/views",
+            "graphs_F_views_F": "/graphs/{graph_id}/views/{view_name}",
+            "system_models": "/system/models",
+        }
         route_patterns = {key: self._Base_URL + value for key, value in route_patterns.items()}
         self.rout_URL = http_middleware.configure_routing(route_patterns)
 
     def GET(self, HTTP_request, HTTP_reply):
         _, target, _ = HTTP_request.request_line
+
+        if target == "/openapi.json":
+            JSON_reply = self._openapi_json
+            http_middleware.set_simple_reply(200, JSON_reply, ".json", HTTP_reply)
+            return
 
         label, url_parameters = self.rout_URL(target)
 

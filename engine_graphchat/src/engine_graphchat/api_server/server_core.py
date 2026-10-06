@@ -2,6 +2,7 @@ import logging
 
 from engine_graphchat.core import exceptions
 from engine_graphchat.core.dialogue import dialogue_manager
+from engine_graphchat.api_server import openapi
 
 
 logger = logging.getLogger(__name__)
@@ -10,6 +11,7 @@ logger = logging.getLogger(__name__)
 class ServerCore:
     def __init__(self):
         self.DM = dialogue_manager.DialogueManager(model_name=None)
+        self.openapi_schema = openapi.get_openapi()
 
     # Nodes
     def POST_graphs_F_nodes(self, prompt_api):
