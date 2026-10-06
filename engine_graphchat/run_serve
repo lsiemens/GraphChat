@@ -1,5 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+
 echo "Running 'engine_graphchat' using a custom (insecure and unstable) http server."
 echo "To use fastAPI instead run the command 'uv run serve'!"
 echo
 
-cd src && python -m engine_graphchat.api_server.api_server
+export PYTHONPATH="$PROJECT_DIR/src${PYTHONPATH:+:${PYTHONPATH:-}}"
+
+python -m engine_graphchat.api_server.api_server

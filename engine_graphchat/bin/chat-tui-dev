@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -eou pipefail
+
+BIN_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+PROJECT_DIR="$(cd -- $BIN_DIR/../ && pwd -P)"
+
+export USE_MOCK_LLM_SDK=TRUE
+export PYTHONPATH="$PROJECT_DIR/src${PYTHONPATH:+:${PYTHONPATH:-}}"
+
+python -m engine_graphchat.tui.chat "$BIN_DIR/logs"

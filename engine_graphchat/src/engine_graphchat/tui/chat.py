@@ -195,9 +195,20 @@ class Chat_TUI:
 
 
 if __name__ == "__main__":
-    #import os
-    #os.environ["USE_MOCK_LLM_SDK"] = "True"
-    logger_config.configure(__name__, "chat_tui.log")
+    import sys
+    import os
+
+    log_path = "tui.chat.log"
+    if len(sys.argv) > 1:
+        path = sys.argv[1]
+        if os.path.exists(path):
+            if not os.path.isdir(path):
+                raise NotADirectoryError(f"The path `{path}` exists but is not a directory!")
+        else:
+            os.makedirs(path)
+        log_path = os.path.join(path, log_path)
+
+    logger_config.configure(__name__, log_path)
 
     try:
         tui = Chat_TUI()

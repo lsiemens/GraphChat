@@ -368,3 +368,7 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Schemathesis
+.schemathesis
+schemathesis-report

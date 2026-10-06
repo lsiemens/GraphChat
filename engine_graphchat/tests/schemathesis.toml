@@ -1,0 +1,14 @@
+continue-on-failure = true
+
+[output.sanitization]
+enabled = false
+
+[generation]
+max-examples = 50
+
+[phases]
+fuzzing.enabled = false
+stateful.enabled = false
+
+[reports.junit]
+enabled = true
