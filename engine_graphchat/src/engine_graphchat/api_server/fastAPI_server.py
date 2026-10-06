@@ -1,6 +1,10 @@
-from fastapi import FastAPI, HTTPException
+import contextlib
+
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
+from engine_graphchat.core import exceptions, logger_config
 from engine_graphchat.api_server import server_core
 from engine_graphchat.core.api import pydantic_types
 
@@ -9,9 +13,13 @@ _BASE_URL = "/api/v1"
 origins = ["http://localhost:5173"]
 
 
-api = FastAPI()
-_server_core = server_core.ServerCore()
+@contextlib.asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger_config.configure(__name__, "fastAPI_server.log")
+    yield
 
+api = FastAPI(lifespan=lifespan)
+_server_core = server_core.ServerCore()
 
 api.add_middleware(CORSMiddleware,
                    allow_origins=origins,
@@ -19,6 +27,7 @@ api.add_middleware(CORSMiddleware,
                    allow_headers=["Content-Type"])
 
 # Graphs
+
 
 # Nodes
 @api.post(_BASE_URL + "/graphs/{graph_id}/nodes")
@@ -29,6 +38,7 @@ def POST_graphs_F_nodes(graph_id: str, prompt_api: pydantic_types.PromptAPI):
 
     return node_data_api
 
+
 @api.get(_BASE_URL + "/graphs/{graph_id}/nodes")
 def GET_graphs_F_nodes(graph_id: str):
     reply_node_ids = _server_core.GET_graphs_F_nodes()
@@ -36,6 +46,7 @@ def GET_graphs_F_nodes(graph_id: str):
     node_ids_api.from_strings(reply_node_ids)
 
     return node_ids_api
+
 
 @api.get(_BASE_URL + "/graphs/{graph_id}/nodes/{node_id}")
 def GET_graphs_F_nodes_F(graph_id: str, node_id: str):
@@ -45,9 +56,11 @@ def GET_graphs_F_nodes_F(graph_id: str, node_id: str):
 
     return node_data_api
 
+
 @api.get(_BASE_URL + "/graphs/{graph_id}/nodes/{node_id}/info")
 def GET_graphs_F_nodes_F_info(graph_id: str, node_id: str):
     raise HTTPException(status_code=501)
+
 
 # General info
 @api.get(_BASE_URL + "/system/models")
@@ -57,3 +70,13 @@ def GET_system_models():
     models_api.from_strings(reply_models)
 
     return models_api
+
+
+# General configuration
+@api.exception_handler(exceptions.GraphChatError)
+async def exception_handler(request: Request, exc: exceptions.GraphChatError):
+    status, message = _server_core.exception_handler(exc)
+    content = {"message": message}
+    return JSONResponse(status_code=status, content=content)
+
+# TODO add error logging for when pydantic fails to validate response or reply object

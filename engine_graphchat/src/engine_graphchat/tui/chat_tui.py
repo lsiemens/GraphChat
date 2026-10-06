@@ -16,10 +16,13 @@ except ImportError:
     rich = None
     print("Warning: Could not import \"rich\", formatting of markdown will not be available")
 
+
+from engine_graphchat.core import exceptions, logger_config
 from engine_graphchat.core.dialogue import dialogue_manager
 
 
 logger = logging.getLogger(__name__)
+
 
 class Chat_TUI:
     _model_name = "grok-4.20-0309-non-reasoning"
@@ -27,7 +30,12 @@ class Chat_TUI:
     _ID_chars = 10
 
     def __init__(self):
-        self.DM = dialogue_manager.DialogueManager(model_name=self._model_name)
+        try:
+            self.DM = dialogue_manager.DialogueManager(model_name=self._model_name)
+        except exceptions.GraphChatError:
+            logger.exception("Failed to initialize DialogueManager")
+            raise
+
         self._greeting = f"Connected to {self._agent_name}!"
         self.show_ids = False
 
@@ -47,12 +55,20 @@ class Chat_TUI:
 
         if prompt.lower().startswith("merge "):
             targets = prompt.split(" ")[1:]
-            self.DM.MERGE(targets)
+            try:
+                self.DM.MERGE(targets)
+            except exceptions.GraphChatError as e:
+                logger.exception("Failed to merge nodes")
+                self.print(f"> Merge failed: operation failed with `{e}`")
             return True
 
         if prompt.lower().startswith("checkout "):
             target = prompt.split(" ", 1)[1]
-            self.DM.CHECKOUT(target)
+            try:
+                self.DM.CHECKOUT(target)
+            except exceptions.GraphChatError as e:
+                logger.exception("Failed to merge nodes")
+                self.print(f"> Checkout failed: operation failed with `{e}`")
             return True
 
         if prompt.lower() == "show nodes":
@@ -111,7 +127,12 @@ class Chat_TUI:
                     break
 
                 self.DM.set_prompt(prompt)
-                data_node = self.DM.COMMIT()
+                try:
+                    data_node = self.DM.COMMIT()
+                except exceptions.GraphChatError as e:
+                    logger.exception("Failed to commit node")
+                    self.print(f"> Failed generate node from prompt: operation failed with `{e}`")
+                    continue
 
                 self.print_node(data_node, reply_only=True)
 
@@ -176,6 +197,11 @@ class Chat_TUI:
 if __name__ == "__main__":
     #import os
     #os.environ["USE_MOCK_LLM_SDK"] = "True"
-    logging.basicConfig(filename="chat_tui.log", level=logging.INFO)
-    TUI = Chat_TUI()
-    TUI.start()
+    logger_config.configure(__name__, "chat_tui.log")
+
+    try:
+        tui = Chat_TUI()
+    except exceptions.GraphChatError:
+        logger.exception("Failed to initialize Chat_TUI")
+        raise SystemExit(1)
+    tui.start()

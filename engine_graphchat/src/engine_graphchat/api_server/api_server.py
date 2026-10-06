@@ -1,12 +1,8 @@
-import logging
-
+from engine_graphchat.core import exceptions, logger_config
 from engine_graphchat.api_server import server_core
 from engine_graphchat.core.api import api_json, api_types
 
 from engine_graphchat.http_server import http_server, http_middleware
-
-
-logger = logging.getLogger(__name__)
 
 
 class GraphChatServer:
@@ -100,28 +96,34 @@ class GraphChatServer:
         self.set_CORS_headers(HTTP_request, HTTP_reply)
         method, _, _ = HTTP_request.request_line
 
-        match method:
-            case "GET":
-                self.GET(HTTP_request, HTTP_reply)
-                return
+        try:
+            match method:
+                case "GET":
+                    self.GET(HTTP_request, HTTP_reply)
+                    return
 
-            case "POST":
-                self.POST(HTTP_request, HTTP_reply)
-                return
+                case "POST":
+                    self.POST(HTTP_request, HTTP_reply)
+                    return
 
-            case "DELETE":
-                self.DELETE(HTTP_request, HTTP_reply)
-                return
+                case "DELETE":
+                    self.DELETE(HTTP_request, HTTP_reply)
+                    return
 
-            case _:
-                http_middleware.set_simple_reply(400, "", "", HTTP_reply)
-                return
+                case _:
+                    http_middleware.set_simple_reply(400, "", "", HTTP_reply)
+                    return
+        except exceptions.GraphChatError as e:
+            status, message = self._server_core.exception_handler(e)
+            body = "{\"message\":\"" + message + "\"}"
+            http_middleware.set_simple_reply(status, body, ".json", HTTP_reply)
+            return
 
         http_middleware.set_simple_reply(500, "", "", HTTP_reply)
 
 
 if __name__ == "__main__":
-    logging.basicConfig(filename="api_server.log", level=logging.INFO)
+    logger_config.configure("engine_graphchat", "api_server.log")
 
     CORS_settings = (["http://localhost:5173"], [], ["content-type"], [], 600)
     engine = GraphChatServer(CORS_settings=CORS_settings)
