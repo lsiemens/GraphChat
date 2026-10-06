@@ -6,7 +6,7 @@ import logging
 import urllib.parse
 import os.path
 
-from . import http_message
+from . import exceptions
 
 
 logger = logging.getLogger(__name__)
@@ -78,6 +78,7 @@ def load_file_from_target(root, HTTP_request, HTTP_reply):
 def configure_CORS(allow_origins, allow_methods, allow_headers, expose_headers, max_age):
     all_allowed_methods = ["GET", "HEAD", "POST"] + allow_methods
     # TODO add processing for "*"
+
     def set_CORS_headers(HTTP_request, HTTP_reply):
         if HTTP_reply.status_code is not None:
             # HTTP_request and HTTP_reply can not be trusted
@@ -128,7 +129,7 @@ def set_simple_reply(status_code, body, ext, HTTP_reply):
         if len(HTTP_reply.body) != 0:
             set_content_type_from_ext(ext, HTTP_reply)
     except TypeError:
-        raise http_message.HTTPError("ERROR: body must be a string or bytes")
+        raise exceptions.SerializeError("HTTP reply body must be a string or bytes")
     HTTP_reply.headers["connection"] = "close"
 
 
@@ -148,32 +149,32 @@ def make_simple_page(title, content):
 def configure_routing(patterns):
     for pattern in patterns.values():
         if pattern.endswith("/"):
-            raise ValueError("Patterns cannot end with \"/\"")
+            raise exceptions.ProtocolError("Routing patterns cannot end with \"/\"")
         if not pattern.startswith("/"):
-            raise ValueError("Patterns must begin with \"/\"")
+            raise exceptions.ProtocolError("Routing patterns must begin with \"/\"")
 
     patterns = {label: pattern_blocks[1:].split("/") for label, pattern_blocks in patterns.items()}
     for pattern_blocks in patterns.values():
         for pattern_block in pattern_blocks:
             if len(pattern_block) == 0:
-                raise ValueError("Pattern blocks must not be empty")
+                raise exceptions.ParseError("Routing pattern blocks must not be empty")
 
             if ("{" not in pattern_block) and ("}" not in pattern_block):
                 continue
 
             if len(pattern_block) <= 2:
-                raise ValueError("Variable pattern blocks must not be empty")
+                raise exceptions.ParseError("Routing variable pattern blocks must not be empty")
 
             if pattern_block[0] != "{":
-                raise ValueError("Variable pattern blocks must start with \"{\"")
+                raise exceptions.ParseError("Routing variable pattern blocks must start with \"{\"")
             if pattern_block[-1] != "}":
-                raise ValueError("Variable pattern blocks must end with \"}\"")
+                raise exceptions.ParseError("Routing variable pattern blocks must end with \"}\"")
 
     def route_URL(path):
         if path.endswith("/"):
-            raise ValueError("Path cannot end with \"/\"")
+            raise exceptions.ParseError("Routing path cannot end with \"/\"")
         if not path.startswith("/"):
-            raise ValueError("Path must begin with \"/\"")
+            raise exceptions.ParseError("Routing path must begin with \"/\"")
 
         path_blocks = path[1:].split("/")
 

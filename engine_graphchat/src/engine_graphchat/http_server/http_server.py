@@ -30,7 +30,7 @@ class HTTPServer:
                 server.listen(self._backlog)
                 server.setblocking(False)
             except OSError:
-                logger.exception("Failure while binding socket.")
+                logger.exception("Failure while binding socket")
                 raise
 
             poller = select.poll()
@@ -48,7 +48,7 @@ class HTTPServer:
                                 client = server.accept()
                                 client[0].setblocking(False)
                             except OSError:
-                                logger.warning("Failed to accept connection.")
+                                logger.warning("Failed to accept connection")
                                 continue
 
                             conn = http_connection.HTTPConnection(*client, self._process_request)
@@ -76,6 +76,7 @@ class HTTPServer:
 
             except KeyboardInterrupt:
                 print("\nClosing HTTP server!")
+
 
 if __name__ == "__main__":
     logging.basicConfig(filename="http_server.log", level=logging.INFO)

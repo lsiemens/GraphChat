@@ -6,13 +6,14 @@ import logging
 import re
 import email.utils
 
+from . import exceptions
 
 logger = logging.getLogger(__name__)
-STATUS_CODES = {200:"OK", 201:"Created", 204:"No Content",
-                400:"Bad Request", 403:"Forbidden", 404:"Not Found",
-                411:"Length Required", 413:"Content Too Large",
-                500:"Internal Server Error", 501:"Not Implemented",
-                505:"HTTP Version Not Supported"}
+STATUS_CODES = {200: "OK", 201: "Created", 204: "No Content",
+                400: "Bad Request", 403: "Forbidden", 404: "Not Found",
+                411: "Length Required", 413: "Content Too Large",
+                500: "Internal Server Error", 501: "Not Implemented",
+                505: "HTTP Version Not Supported"}
 HTTP_VERSION = "HTTP/1.1"
 ENCODING_HEADER = "iso-8859-1"
 ENCODING_BODY = "utf-8"
@@ -28,12 +29,14 @@ VALID_HTTP_VERSION = re.compile(r"^HTTP\/1\.[01]$")
 VALID_HEADER_NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_\-]{0,255}$")
 VALID_HEADER_VALUE = re.compile(r"^(?!:)[ -~]{0,4095}$")
 
+
 def is_HTTP_header_field(name, value):
     if not re.match(VALID_HEADER_NAME, name):
         return False
     if not re.match(VALID_HEADER_VALUE, value):
         return False
     return True
+
 
 def is_HTTP_request_line(method, target, HTTP_version):
     if not re.match(VALID_HTTP_METHOD, method):
@@ -45,11 +48,13 @@ def is_HTTP_request_line(method, target, HTTP_version):
 
     return True
 
+
 def CriticalHTTPError(status_code):
     """To be used when HTTP_reply fails"""
     reply = f"HTTP/1.1 {status_code} {STATUS_CODES[status_code]}\r\n" \
             f"connection: close\r\n\r\n"
     return reply.encode(ENCODING_HEADER)
+
 
 def MinorHTTPError(status_code, close="close"):
     reply = HTTPReply()
@@ -58,14 +63,11 @@ def MinorHTTPError(status_code, close="close"):
     reply.serialize()
     return reply
 
-class HTTPError(Exception):
-    """Errors when parsing HTTP messages"""
-    pass
 
 class HTTPReply:
     def __init__(self, as_head=False):
         self.status_code = None
-        self.headers = {"date":email.utils.formatdate(usegmt=True)}
+        self.headers = {"date": email.utils.formatdate(usegmt=True)}
         self.body = b""
 
         self._as_head = as_head
@@ -78,7 +80,7 @@ class HTTPReply:
 
     def serialize(self):
         if self._serialized:
-            raise HTTPError(f"Error: HTTPReply can not be serialized more than once")
+            raise exceptions.SerializeError("HTTPReply can not be serialized more than once")
 
         # Format headers
         headers = {}
@@ -86,12 +88,12 @@ class HTTPReply:
             if is_HTTP_header_field(name, value):
                 headers[name.lower()] = value
             else:
-                raise HTTPError(f"Error: malformed header field {repr(key)}:{repr(value)}")
+                raise exceptions.ProtocolError(f"Malformed reply header field {repr(key)}:{repr(value)}")
 
         # Validate status code
         status_code = self.status_code
         if self.status_code not in STATUS_CODES:
-            raise HTTPError(f"Error: the status code {self.status_code} is not implemented!")
+            raise exceptions.ProtocolError(f"The status code {self.status_code} is not implemented!")
         reason_phrase = STATUS_CODES[self.status_code]
 
         # Format body
@@ -99,7 +101,7 @@ class HTTPReply:
         if isinstance(body, str):
             body = self.body.encode(ENCODING_BODY)
         if not isinstance(body, bytes):
-            raise HTTPError("Error: the body must be a string or bytes!")
+            raise exceptions.SerializeError("HTTP reply body must be a string or bytes")
 
         if self._force_no_content(status_code):
             if len(body) != 0:
@@ -109,7 +111,7 @@ class HTTPReply:
         if len(body) != 0:
             headers["content-length"] = str(len(body))
             if "content-type" not in headers:
-                raise HTTPError("Error: replies with a body must declare the content type!")
+                raise exceptions.SerializeError("HTTP replies with a body must declare the content type")
 
         # Format reply
         reply = f"{HTTP_VERSION} {status_code} {reason_phrase}\r\n"
@@ -126,12 +128,13 @@ class HTTPReply:
         """Replies that must not have content"""
         return (status_code < 200) or (status_code in [204, 205, 304])
 
+
 class HTTPRequest:
     _max_body_size = 2**20
     _max_header_size = 8190
 
     def __init__(self, buffer=b""):
-        self.request_line = None # None or (Method, target, HTTP_version)
+        self.request_line = None  # None or (Method, target, HTTP_version)
         self.headers = {}
         self.body = b""
 
@@ -166,9 +169,9 @@ class HTTPRequest:
                 if self.request_line is None:
                     parts = line.split()
                     if len(parts) != 3:
-                        raise HTTPError("Could not read METHOD, TARGET, VERSION")
+                        raise exceptions.ParseError("Could not read METHOD, TARGET, VERSION")
                     if not is_HTTP_request_line(*parts):
-                        raise HTTPError("Invalid characters in HTTP request-line")
+                        raise exceptions.ProtocolError("Invalid characters in HTTP request-line")
                     self.request_line = (parts[0].upper(), parts[1], parts[2].upper())
                     continue
 
@@ -177,29 +180,28 @@ class HTTPRequest:
                     if "content-length" in self.headers:
                         length = self.headers["content-length"]
                         if not length.isdigit():
-                            raise HTTPError("Invalid characters in \"content-length\"")
+                            raise exceptions.ProtocolError("Failed to update HTTP request: Invalid characters in \"content-length\"")
                         self.headers["content-length"] = int(self.headers["content-length"])
                     self._reading_head = False
                     break
 
                 if ":" not in line:
-                    raise HTTPError("Header-field missing \":\"")
+                    raise exceptions.ProtocolError("Header-field missing \":\"")
 
                 name, value = line.split(":", 1)
 
                 if not is_HTTP_header_field(name, value):
-                    raise HTTPError("Invalid characters in header-field name or value")
+                    raise exceptions.ProtocolError("Failed to update HTTP request: Invalid characters in header-field name or value")
 
                 value = value.lstrip()
                 self.headers[name.lower()] = value
 
             if self._reading_head:
                 if (self._bytes_header + len(self.buffer) > self._max_header_size):
-                    raise HTTPError("Header exceeds the maximum size")
+                    raise exceptions.ParseError("HTTP request header exceeds the maximum size")
             else:
                 if (self._bytes_header > self._max_header_size):
-                    raise HTTPError("Header exceeds the maximum size")
-
+                    raise exceptions.ParseError("HTTP request header exceeds the maximum size")
 
         if (not self._reading_head) and ("content-length" not in self.headers):
             self._is_ready = True
@@ -215,10 +217,10 @@ class HTTPRequest:
             self.buffer = self.buffer[bytes_take:]
 
             if len(self.body) > self._max_body_size:
-                raise HTTPError("Body exceeds the maximum size")
+                raise exceptions.ParseError("HTTP request body exceeds the maximum size")
 
             if len(self.body) > length:
-                raise HTTPError("Body exceeds the length given by \"content-length\"")
+                raise exceptions.ParseError("HTTP request body exceeds the length given by \"content-length\"")
 
             if len(self.body) == length:
                 self._is_ready = True

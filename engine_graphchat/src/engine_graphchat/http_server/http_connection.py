@@ -2,10 +2,9 @@
 Manage a single HTTP connection
 """
 
-
 import logging
-import socket
 
+from . import exceptions
 from . import http_message
 
 
@@ -64,13 +63,9 @@ class HTTPConnection:
 
         try:
             self._HTTP_request.update()
-        except http_message.HTTPError:
-            logger.warning("Could not update the HTTP request.")
-            HTTP_reply = http_message.HTTPReply()
-            HTTP_reply.status_code = 400
-            HTTP_reply.headers["connection"] = "close"
-
-            self._HTTP_reply_que.append(HTTP_reply)
+        except exceptions.HTTPError:
+            logger.warning("Could not update the HTTP request")
+            self._HTTP_reply_que.append(http_message.MinorHTTPError(400, "close"))
             return
             # TODO disable reading
 
@@ -90,8 +85,8 @@ class HTTPConnection:
         if not current_reply.serialized:
             try:
                 current_reply.serialize()
-            except http_message.HTTPError:
-                logger.warning("Could not serialize the HTTP reply.")
+            except exceptions.HTTPError:
+                logger.exception("Could not serialize the HTTP reply")
                 self._HTTP_reply_que[0] = http_message.MinorHTTPError(400, "close")
                 current_reply = self._HTTP_reply_que[0]
                 # catch exception from serialize in Minor error
@@ -105,7 +100,7 @@ class HTTPConnection:
             try:
                 del self._HTTP_reply_que[0]
             except KeyError:
-                logger.exception("Could not delete a completed HTTP reply.")
+                logger.exception("Could not delete a completed HTTP reply")
                 # TODO more checking and recovery
 
             return
@@ -135,8 +130,8 @@ class HTTPConnection:
         if HTTP_reply.status_code is None:
             try:
                 self._process_request_core(HTTP_request, HTTP_reply)
-            except http_message.HTTPError:
-                logger.exception("Failed to process the HTTP request.")
+            except exceptions.HTTPError:
+                logger.exception("Failed to process the HTTP request")
                 self._HTTP_reply_que.append(http_message.MinorHTTPError(500, "close"))
         self._HTTP_reply_que.append(HTTP_reply)
 
