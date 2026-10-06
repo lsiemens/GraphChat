@@ -203,6 +203,6 @@ def configure_routing(patterns):
                 continue
 
             return label, parameters
-        return None, None
+        raise exceptions.NotFoundError(f"Failed to route path: {path}")
 
     return route_URL

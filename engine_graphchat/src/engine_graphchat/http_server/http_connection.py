@@ -63,9 +63,12 @@ class HTTPConnection:
 
         try:
             self._HTTP_request.update()
-        except exceptions.HTTPError:
-            logger.warning("Could not update the HTTP request")
-            self._HTTP_reply_que.append(http_message.MinorHTTPError(400, "close"))
+        except exceptions.HTTPError as e:
+            status, message = self.exception_handler(e)
+            HTTP_error = http_message.MinorHTTPError(status, "close")
+            HTTP_error.body = message
+            HTTP_error.headers["content-type"] = "txt/plain"
+            self._HTTP_reply_que.append(HTTP_error)
             return
             # TODO disable reading
 
@@ -85,9 +88,12 @@ class HTTPConnection:
         if not current_reply.serialized:
             try:
                 current_reply.serialize()
-            except exceptions.HTTPError:
-                logger.exception("Could not serialize the HTTP reply")
-                self._HTTP_reply_que[0] = http_message.MinorHTTPError(400, "close")
+            except exceptions.HTTPError as e:
+                status, message = self.exception_handler(e)
+                HTTP_error = http_message.MinorHTTPError(status, "close")
+                HTTP_error.body = message
+                HTTP_error.headers["content-type"] = "txt/plain"
+                self._HTTP_reply_que[0] = HTTP_error
                 current_reply = self._HTTP_reply_que[0]
                 # catch exception from serialize in Minor error
 
@@ -130,10 +136,35 @@ class HTTPConnection:
         if HTTP_reply.status_code is None:
             try:
                 self._process_request_core(HTTP_request, HTTP_reply)
-            except exceptions.HTTPError:
-                logger.exception("Failed to process the HTTP request")
-                self._HTTP_reply_que.append(http_message.MinorHTTPError(500, "close"))
+            except exceptions.HTTPError as e:
+                status, message = self.exception_handler(e)
+                HTTP_error = http_message.MinorHTTPError(status, "close")
+                HTTP_error.body = message
+                HTTP_error.headers["content-type"] = "txt/plain"
+                self._HTTP_reply_que.append(HTTP_error)
         self._HTTP_reply_que.append(HTTP_reply)
+
+
+    def exception_handler(self, exception):
+        message = f"HTTP request failed with `{exception}`"
+        if isinstance(exception, exceptions.NotFoundError):
+            status = 404
+            logger.info("HTTP request failed: resource not found")
+        elif isinstance(exception, exceptions.ParseError):
+            status = 400
+            logger.info("HTTP request failed: parse failure")
+        elif isinstance(exception, exceptions.ProtocolError):
+            status = 400
+            logger.info("HTTP request failed: protocol violation")
+        elif isinstance(exception, exceptions.SerializeError):
+            status = 500
+            logger.exception("HTTP request failed: serialization failure")
+        else:
+            status = 500
+            logger.exception("HTTP request failed")
+
+        return status, message
+
 
 
 def process_request_all_good(HTTP_request, HTTP_reply):

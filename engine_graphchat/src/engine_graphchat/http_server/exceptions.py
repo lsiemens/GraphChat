@@ -9,6 +9,10 @@ class HTTPError(Exception):
     """
 
 
+class NotFoundError(HTTPError):
+    """Raised when an object or resource can not be found"""
+
+
 class ParseError(HTTPError):
     """Raised when an object can not be parsed"""
 
