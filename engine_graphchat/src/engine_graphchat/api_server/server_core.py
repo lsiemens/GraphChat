@@ -11,6 +11,7 @@ class ServerCore:
     def __init__(self):
         self.DM = dialogue_manager.DialogueManager(model_name=None)
 
+    # Nodes
     def POST_graphs_F_nodes(self, prompt_api):
         # TODO get proper model names from the client
         self.DM.set_model(prompt_api.model)
@@ -33,6 +34,18 @@ class ServerCore:
     def GET_graphs_F_nodes_F_info(self, graph_id, node_id):
         pass
 
+    # views
+    def GET_graphs_F_views(self):
+        return list(self.DM.graph.views.keys())
+
+    def POST_graphs_F_views_F(self, view_name, upstream):
+        if view_name not in self.DM.graph.views:
+            raise exceptions.NotFoundError(f"The view method {view_name} is not in the graph")
+
+        method = self.DM.graph.views[view_name]
+        return method(upstream)
+
+    # General info
     def GET_system_models(self):
         return self.DM.llm_service.get_model_names()
 

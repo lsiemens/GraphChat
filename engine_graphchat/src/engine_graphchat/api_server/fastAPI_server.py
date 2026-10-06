@@ -62,6 +62,26 @@ def GET_graphs_F_nodes_F_info(graph_id: str, node_id: str):
     raise HTTPException(status_code=501)
 
 
+# Views
+@api.get(_BASE_URL + "/graphs/{graph_id}/views")
+def GET_graphs_F_views(graph_id: str):
+    reply_view_names = _server_core.GET_graphs_F_views()
+    view_names_api = pydantic_types.ViewNamesAPI()
+    view_names_api.from_strings(reply_view_names)
+
+    return view_names_api
+
+
+@api.post(_BASE_URL + "/graphs/{graph_id}/views/{view_name}")
+def POST_graphs_F_views_F(graph_id: str, view_name: str, view_upstream_api: pydantic_types.ViewUpstreamAPI):
+    view_upstream = view_upstream_api.to_strings()
+    reply_view_context = _server_core.POST_graphs_F_views_F(view_name, view_upstream)
+    view_context_api = pydantic_types.ViewContextAPI()
+    view_context_api.from_strings(reply_view_context)
+
+    return view_context_api
+
+
 # General info
 @api.get(_BASE_URL + "/system/models")
 def GET_system_models():

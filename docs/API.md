@@ -39,7 +39,11 @@ supplied as the LLM's context.
 
 The server acts as a repository of algorithms for generating views of the graph.
 
-- GET `/graphs/{graph_id}/view` : Optional for the future. Generate a topologically ordered view of the traversable subgraph
+- GET  `/graphs/{graph_id}/views` : List the available methods for generating views
+- POST `/graphs/{graph_id}/views/{view_name}` : Generate a view of the traversable subgraph
+
+Note the {view_name} should be a lowercase human readable name, with spaces
+replaced by '_'.
 
 ### General
 Endpoints for retrieving properties, configuration, and statistics.
@@ -192,7 +196,62 @@ specific node.
 The `node_id` in the request should match the `Node.id` in the response.
 
 ### Views
-Not yet defined.
+
+#### List View methods
+
+Send a `GET` request to `/graphs/{graph_id}/views`. The response contains the
+view name of all available view methods. Note the graph_id is irrelevant in
+this case.
+
+```
+{
+  "title": "List View names",
+  "type": "object",
+  "properties": {
+    "viewNames": {
+      "type": "array",
+      "description": "A list of all of the available view methods",
+      "items": {
+        "type": "string" }}},
+  "additionalProperties": false,
+}
+```
+
+#### Compute View
+
+Send the following JSON using `POST` to `/graphs/{graph_id}/views/{view_name}`.
+The server computes the view using the provided method.
+
+```
+{
+  "title": "View upstream",
+  "type": "object",
+  "properties": {
+    "upstream": {
+      "type": "array",
+      "description": "A list of the IDs of existing upstream nodes",
+      "items": {
+        "type": "NodeID" }},
+  "additionalProperties": false,
+}
+```
+
+The expected response is the following JSON defining the context found for the
+given view method and upstream nodes.
+
+```
+{
+  "title": "View context",
+  "type": "object",
+  "properties": {
+    "context": {
+      "type": "array",
+      "description": "A list of the IDs defining the context for the prompt",
+      "items": {
+        "type": "NodeID" }},
+  "additionalProperties": false,
+}
+```
 
 ### General
 

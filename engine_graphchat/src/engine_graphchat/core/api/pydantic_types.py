@@ -43,7 +43,7 @@ class NodeDataAPI(BaseModel):
 class NodeIDsAPI(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
-    ids: list[str] = []
+    ids: list[str]
 
     def from_strings(self, ids: list[str]):
         self.ids = ids
@@ -52,7 +52,34 @@ class NodeIDsAPI(BaseModel):
 class ModelNamesAPI(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
-    models: list[str] = []
+    models: list[str]
 
     def from_strings(self, models: list[str]):
         self.models = models
+
+
+class ViewNamesAPI(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    viewNames: list[str]
+
+    def from_strings(self, viewNames: list[str]):
+        self.viewNames = viewNames
+
+
+class ViewUpstreamAPI(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    upstream: list[str]
+
+    def to_strings(self):
+        return self.upstream
+
+
+class ViewContextAPI(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    context: list[str]
+
+    def from_strings(self, context: list[str]):
+        self.context = context

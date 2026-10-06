@@ -9,13 +9,14 @@ class Graph:
     """Directed Acyclic Graph
 
     A Directed Acyclic Graph of node data. While it may in some cases be
-    nessissary to varify that the existing nodes remain a DAG. As long as the
-    existing nodes are imutable and every new node only refers to existing
+    necessary to verify that the existing nodes remain a DAG. As long as the
+    existing nodes are immutable and every new node only refers to existing
     nodes in the graph then after the addition the graph will still be a DAG.
     """
 
     def __init__(self):
         self.nodes = {}
+        self.views = {"simple_dfs": self.topological_ordering}
 
     def add_node(self, node):
         for upstream_id in node.upstream:
@@ -31,12 +32,12 @@ class Graph:
         return True
 
     def topological_ordering(self, upstream):
-        """List ancestor nodes subject to a toplological sort
+        """List ancestor nodes subject to a topological sort
 
         Select the upstream subgraph (all nodes that the current node is
         dependent on). Including the target point this necessarily forms a
         connected DAG. Return the ids of the nodes in this graph subject to a
-        topological sort. This topological sort uses a DFS (Corment et al)
+        topological sort. This topological sort uses a DFS (Cormen, Tarjan)
 
         Parameters
         ----------
@@ -77,7 +78,7 @@ class Graph:
         return ordered
 
     def terminal_nodes(self, node_id):
-        """Find the terminal decendant nodes
+        """Find the terminal descendant nodes
         """
 
         children = {}

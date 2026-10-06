@@ -16,6 +16,8 @@ class GraphChatServer:
         route_patterns = {"graphs_F_nodes": "/graphs/{graph_id}/nodes",
                           "graphs_F_nodes_F": "/graphs/{graph_id}/nodes/{node_id}",
                           "graphs_F_nodes_F_info": "/graphs/{graph_id}/nodes/{node_id}/info",
+                          "graphs_F_views": "/graphs/{graph_id}/views",
+                          "graphs_F_views_F": "/graphs/{graph_id}/views/{view_name}",
                           "system_models": "/system/models"}
         route_patterns = {key: self._Base_URL + value for key, value in route_patterns.items()}
         self.rout_URL = http_middleware.configure_routing(route_patterns)
@@ -44,6 +46,13 @@ class GraphChatServer:
             case "graphs_F_nodes_F_info":
                 http_middleware.set_simple_reply(501, "", "", HTTP_reply)
                 return
+
+            case "graphs_F_views":
+                reply_view_names = self._server_core.GET_graphs_F_views()
+                view_names_api = api_types.ViewNamesAPI()
+                view_names_api.from_strings(reply_view_names)
+                JSON_reply = api_json.dump_JSON_as_type(view_names_api, api_types.ViewNamesAPI)
+
             case "system_models":
                 reply_models = self._server_core.GET_system_models()
                 models_api = api_types.ModelNamesAPI()
@@ -71,17 +80,28 @@ class GraphChatServer:
         JSON_request = HTTP_request.body
 
         # --- Enter Internal CORE --- #
-        if label != "graphs_F_nodes":
-            http_middleware.set_simple_reply(404, "", "", HTTP_reply)
-            return
+        JSON_reply = {}
+        match label:
+            case "graphs_F_nodes":
+                prompt_api = api_json.load_JSON_as_type(JSON_request, api_types.PromptAPI)
+                reply_node_data = self._server_core.POST_graphs_F_nodes(prompt_api)
+                node_data_api = api_types.NodeDataApi()
+                node_data_api.from_NodeData(reply_node_data)
+                JSON_reply = api_json.dump_JSON_as_type(node_data_api, api_types.NodeDataApi)
 
-        prompt_api = api_json.load_JSON_as_type(JSON_request, api_types.PromptAPI)
+            case "graphs_F_views_F":
+                view_name = url_parameters["view_name"]
+                view_upstream_api = api_json.load_JSON_as_type(JSON_request, api_types.ViewUpstreamAPI)
+                view_upstream = view_upstream_api.to_strings()
+                reply_view_context = self._server_core.POST_graphs_F_views_F(view_name, view_upstream)
+                view_context_api = api_types.NodeDataApi()
+                view_context_api.from_NodeData(reply_view_context)
+                JSON_reply = api_json.dump_JSON_as_type(view_context_api, api_types.ViewContextAPI)
 
-        reply_node_data = self._server_core.POST_graphs_F_nodes(prompt_api)
+            case _:
+                http_middleware.set_simple_reply(501, "", "", HTTP_reply)
+                return
 
-        node_data_api = api_types.NodeDataApi()
-        node_data_api.from_NodeData(reply_node_data)
-        JSON_reply = api_json.dump_JSON_as_type(node_data_api, api_types.NodeDataApi)
         # --- Exit Internal CORE --- #
 
         http_middleware.set_simple_reply(200, JSON_reply, ".json", HTTP_reply)

@@ -67,3 +67,33 @@ class ModelNamesAPI:
 
     def from_strings(self, models):
         self.models = models
+
+
+class ViewNamesAPI:
+    viewNames: list[str]
+
+    def __init__(self):
+        self.viewNames = None
+
+    def from_strings(self, viewNames):
+        self.viewNames = viewNames
+
+
+class ViewUpstreamAPI:
+    upstream: list[str]
+
+    def __init__(self):
+        self.upstream = None
+
+    def to_strings(self):
+        return self.upstream
+
+
+class ViewContextAPI:
+    context: list[str]
+
+    def __init__(self):
+        self.context = None
+
+    def from_strings(self, context):
+        self.context = context
