@@ -3,6 +3,8 @@ Classes defining a chat Node
 """
 import hashlib
 
+from engine_graphchat.core import exceptions
+
 
 class NodeData:
     _ENCODING = "utf-8"
@@ -15,20 +17,27 @@ class NodeData:
         self.reply = reply
 
     def hash(self):
-        if self.model is None:
-            raise ValueError("Can not generate node ID, model is None")
-        if self.upstream is None:
-            raise ValueError("Can not generate node ID, upstream is None")
-        if self.request is None:
-            raise ValueError("Can not generate node ID, request is None")
-        if self.request.context is None:
-            raise ValueError("Can not generate node ID, request.context is None")
-        if self.request.content is None:
-            raise ValueError("Can not generate node ID, request.content is None")
-        if self.reply is None:
-            raise ValueError("Can not generate node ID, reply is None")
-        if self.reply.content is None:
-            raise ValueError("Can not generate node ID, reply.content is None")
+        if not isinstance(self.model, str):
+            raise exceptions.InvalidNodeError("Failed to generate node ID: model must be a string")
+
+        if not isinstance(self.upstream, list):
+            raise exceptions.InvalidNodeError("Failed to generate node ID: upstream must be a list")
+        if not all(isinstance(node_id, str) for node_id in self.upstream):
+            raise exceptions.InvalidNodeError("Failed to generate node ID: all items in upstream must be strings")
+
+        if not isinstance(self.request, NodeRequest):
+            raise exceptions.InvalidNodeError("Failed to generate node ID: request must be a NodeRequest")
+        if not isinstance(self.request.context, list):
+            raise exceptions.InvalidNodeError("Failed to generate node ID: request.context must be a list")
+        if not all(isinstance(node_id, str) for node_id in self.request.context):
+            raise exceptions.InvalidNodeError("Failed to generate node ID: all items in request.context must be strings")
+        if not isinstance(self.request.content, str):
+            raise exceptions.InvalidNodeError("Failed to generate node ID: request.content must be a string")
+
+        if not isinstance(self.reply, NodeReply):
+            raise exceptions.InvalidNodeError("Failed to generate node ID: reply must be a NodeReply")
+        if not isinstance(self.reply.content, str):
+            raise exceptions.InvalidNodeError("Failed to generate node ID: reply.content must be a string")
 
         identifying_data = f"{self.model}|{self.upstream}|{self.request.context}|{self.request.content}|{self.reply.content}"
         identifying_data = identifying_data.encode(self._ENCODING)

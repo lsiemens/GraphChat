@@ -9,6 +9,8 @@ import getpass
 
 import keyring
 
+from engine_graphchat.core import exceptions
+
 
 logger = logging.getLogger(__name__)
 _service = "com.lsiemens.graphchat.engine"
@@ -19,19 +21,16 @@ def clear_API_key():
     logger.info("Clear API keys.")
     try:
         keyring.delete_password(_service, _API_key_name)
-    except keyring.errors.PasswordDeleteError:
+    except keyring.errors.PasswordDeleteError as e:
         logger.exception("Failed to clear API key from keyring!")
-        raise
+        raise exceptions.StorageError("Keyring: failed to delete API key.") from e
 
 
 def save_API_key(API_key):
-    if API_key is None:
-        raise ValueError("API key must not be None.")
-
     try:
         keyring.set_password(_service, _API_key_name, API_key)
-    except keyring.errors.PasswordSetError:
-        raise
+    except keyring.errors.PasswordSetError as e:
+        raise exceptions.StorageError("Keyring: failed to write API key.") from e
 
 
 def initialize_client(initializer):
@@ -61,8 +60,8 @@ def initialize_client(initializer):
 
         try:
             save_API_key(API_key)
-        except (keyring.errors.PasswordSetError, ValueError):
-            logger.exception("Failed to save API key to keyring.")
+        except exceptions.StorageError:
+            logger.exception("Failed to save the API key.")
 
-    logger.info("Initialize client with API key from keyring.")
+    logger.debug("Initialize client with API key from keyring")
     return initializer(API_key)

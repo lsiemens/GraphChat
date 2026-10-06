@@ -8,16 +8,13 @@ import time
 
 import xai_sdk
 
+from engine_graphchat.core import exceptions
 from engine_graphchat.core.llm import MOCK_sdk
 from engine_graphchat.core.llm import utils, api_keys
 from engine_graphchat.core.dag import node
 
 
 logger = logging.getLogger(__name__)
-
-
-class LLM_ERROR(Exception):
-    pass
 
 
 class LLM_Service:
@@ -77,11 +74,11 @@ class LLM_Chat:
                 return self._chat.sample()
             except grpc.RpcError as e:
                 if e.code() != grpc.StatusCode.RESOURCE_EXHAUSTED:
-                    logger.exception("Unrecoverable RPC error.")
-                    raise LLM_ERROR("Unrecoverable RPC error.") from e
+                    logger.exception("Unrecoverable RPC error")
+                    raise exceptions.ServiceError("LLM service connection failure") from e
                 logger.warning("RPC resource exhausted: attempt %d of %d", attempt + 1, self._MAX_RETRIES)
         logger.error("RPC resource exhausted: Reached maximum retries.")
-        raise LLM_ERROR("Failed to generate a sample from the LLM.")
+        raise exceptions.ServiceError("LLM service rate limited: retries failed")
 
     def send_node_request(self, node_request):
         user_msg = xai_sdk.chat.user(node_request.content)
@@ -91,7 +88,7 @@ class LLM_Chat:
         reply = self._sample()
 
         if reply.finish_reason != "REASON_STOP":
-            raise LLM_ERROR("LLM: Failed to generate a full reply!")
+            raise exceptions.ServiceError("LLM failed to generate a full reply")
 
         assistant_msg = xai_sdk.chat.assistant(reply.content)
         self._chat.append(assistant_msg)
@@ -112,7 +109,7 @@ class LLM_Chat:
 
 def node_to_xAI_messages(node_data):
     if node_data.request is None:
-        raise LLM_ERROR("NodeData dose not have a prompt")
+        raise exceptions.InvalidNodeError("NodeData does not have a user request")
     if node_data.reply is None:
-        raise LLM_ERROR("NodeData does not have an agent reply")
+        raise exceptions.InvalidNodeError("NodeData does not have an agent reply")
     return [xai_sdk.chat.user(node_data.request.content), xai_sdk.chat.assistant(node_data.reply.content)]

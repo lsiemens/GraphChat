@@ -4,9 +4,9 @@ Manage the dialogue between the user and LLM agent
 
 import logging
 
+from engine_graphchat.core import exceptions
 from engine_graphchat.core.dag import graph
 from engine_graphchat.core.dag import utils as graph_utils
-
 from engine_graphchat.core.llm import llm_service
 from engine_graphchat.core.llm import utils as llm_utils
 
@@ -76,11 +76,13 @@ class DialogueManager:
                 return
 
             if self._HEAD not in self.graph.nodes:
-                raise ValueError("_HEAD is not in the graph!")
+                raise exceptions.NotFoundError("_HEAD node does not exist in the graph")
 
             tip_node_ids = self.graph.terminal_nodes(self._HEAD)
-            if len(tip_node_ids) != 1:
-                raise ValueError("No unique tip node")
+            if len(tip_node_ids) == 0:
+                raise exceptions.NotFoundError("No tip node found")
+            if len(tip_node_ids) > 1:
+                raise exceptions.InvalidGraphError(f"Tip node is not unique: the graph branches into {len(tip_node_ids)} possible tips")
             tip_node = self.graph.nodes[tip_node_ids[0]]
 
             # configure the state like just after a commit
@@ -134,10 +136,10 @@ class DialogueManager:
         context = [self._get_ID(id_prefix) for id_prefix in context]
 
         if not self.graph.is_valid_context(upstream, context):
-            raise ValueError("Invalid context: the context is incompatible with the provided upstream nodes")
+            raise exceptions.InvalidNodeError("The context is incompatible with the provided upstream nodes")
 
         if not self.graph.is_topological_ordering(context):
-            raise ValueError("Invalid context: the context must be topologically ordered")
+            raise exceptions.InvalidNodeError("The context must be topologically ordered")
 
         self._HEAD = None
         self._state.upstream = upstream
@@ -158,9 +160,9 @@ class DialogueManager:
         options = [node_id for node_id in self.graph.nodes if node_id.startswith(target)]
 
         if len(options) == 0:
-            raise ValueError(f"Node ID \"{target}\" did not match any know nodes")
+            raise exceptions.NotFoundError(f"Node ID \"{target}\" did not match any know nodes")
 
         if len(options) > 1:
-            raise ValueError(f"Node ID \"{target}\" match was not unique, use a longer prefix")
+            raise exceptions.NotFoundError(f"Node ID \"{target}\" match was not unique, use a longer prefix")
 
         return options[0]

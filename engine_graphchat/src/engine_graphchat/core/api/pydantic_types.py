@@ -7,11 +7,11 @@ from engine_graphchat.core.dag import node
 class PromptAPI(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
-    model: str = ""
-    upstream: list[str] = []
-    context: list[str] = []
-    timestamp: str = ""
-    content: str = ""
+    model: str
+    upstream: list[str]
+    context: list[str]
+    timestamp: str
+    content: str
 
     def to_NodeData(self):
         node_request = node.NodeRequest(self.timestamp, self.context, self.content)
@@ -22,13 +22,13 @@ class PromptAPI(BaseModel):
 class NodeDataAPI(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
-    id: str = ""
-    upstream: list[str] = []
-    context: list[str] = []
-    request: str = ""
-    reply: str = ""
-    model: str = ""
-    costUSD: float = 0.0
+    id: str
+    upstream: list[str]
+    context: list[str]
+    request: str
+    reply: str
+    model: str
+    costUSD: float | None
 
     def from_NodeData(self, node_data: node.NodeData):
         self.id = node_data.id

@@ -1,13 +1,16 @@
 import typing
 import json
 
+from engine_graphchat.core import exceptions
+
+
 ACCEPTED_TYPES = [str, int, float, list]
 
 
 def validate_field(value, target_type):
     if typing.get_origin(target_type) is None:
         if target_type not in ACCEPTED_TYPES:
-            raise ValueError(f"Error: the target type {target_type} is not whitelisted")
+            raise exceptions.ContentError(f"Validation failed: the target type {target_type} is not whitelisted")
         return isinstance(value, target_type)
 
     origin = typing.get_origin(target_type)
@@ -15,14 +18,14 @@ def validate_field(value, target_type):
 
     if origin in ACCEPTED_TYPES:
         if len(args) != 1:
-            raise ValueError(f"Error: composite objects must have exactly one type.")
+            raise exceptions.ContentError("Validation failed: composite objects must have exactly one type")
 
         if not isinstance(value, origin):
             return False
 
         return all(validate_field(element, args[0]) for element in value)
 
-    raise ValueError(f"Error: the target type {target_type} is not supported.")
+    raise exceptions.ContentError(f"Validation failed: the target type {target_type} is not supported")
 
 
 def load_JSON_as_type(text, target):
@@ -31,10 +34,10 @@ def load_JSON_as_type(text, target):
     try:
         data = json.loads(text)
     except (json.JSONDecodeError, TypeError) as e:
-        raise ValueError(f"Error: Failed decode json: {e}")
+        raise exceptions.ServiceError("Failed decode json") from e
 
     if set(data) != set(hints):
-        raise ValueError("Error: JSON fields do not match the target fields")
+        raise exceptions.ContentError("Incompatible structure: JSON fields do not match the target fields")
 
     new_obj = target()
 
@@ -42,7 +45,7 @@ def load_JSON_as_type(text, target):
         value = data[field]
 
         if not validate_field(value, field_type):
-            raise ValueError(f"Error: JSON field: {field} does not match the target field type")
+            raise exceptions.ContentError(f"Incompatible structure: {field} does not match the target field type")
 
         setattr(new_obj, field, value)
 

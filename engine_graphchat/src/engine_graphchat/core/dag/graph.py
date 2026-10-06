@@ -2,9 +2,7 @@
 Directed Acyclic Graph of NodeData
 """
 
-
-class GraphError(Exception):
-    pass
+from engine_graphchat.core import exceptions
 
 
 class Graph:
@@ -22,7 +20,7 @@ class Graph:
     def add_node(self, node):
         for upstream_id in node.upstream:
             if upstream_id not in self.nodes:
-                raise GraphError("Error: Upstream node does not exist!")
+                raise exceptions.NotFoundError("Upstream node does not exist in the graph")
 
         self.nodes[node.id] = node
 
@@ -56,14 +54,14 @@ class Graph:
 
         def visit(node_id):
             if node_id not in self.nodes:
-                raise GraphError("Nodes reference elements not in the DAG.")
+                raise exceptions.NotFoundError("Upstream node does not exist in the graph")
 
             node = self.nodes[node_id]
             if node_id in ordered:
                 return
 
             if node_id in visited:
-                raise GraphError("Cycle detected, the graph is not a DAG!")
+                raise exceptions.InvalidGraphError("Cycle detected: the graph is not a DAG!")
 
             visited.add(node_id)
 
@@ -110,6 +108,9 @@ class Graph:
         """
         partial_context = []
         for node_id in context:
+            if node_id not in self.nodes:
+                raise exceptions.NotFoundError("Context node does not exist in the graph")
+
             for upstream_id in self.nodes[node_id].upstream:
                 if upstream_id not in partial_context:
                     return False
@@ -128,7 +129,7 @@ class Graph:
         # DFS
         def visit(node_id):
             if node_id not in self.nodes:
-                raise GraphError("Nodes reference elements not in the DAG.")
+                raise exceptions.NotFoundError("Upstream node does not exist in the graph")
 
             if node_id in traversable:
                 return
