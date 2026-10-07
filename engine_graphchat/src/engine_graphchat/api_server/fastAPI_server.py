@@ -33,8 +33,7 @@ api.add_middleware(CORSMiddleware,
 @api.post(_BASE_URL + "/graphs/{graph_id}/nodes")
 def POST_graphs_F_nodes(graph_id: str, prompt_api: pydantic_types.PromptAPI):
     reply_node_data = _server_core.POST_graphs_F_nodes(prompt_api)
-    node_data_api = pydantic_types.NodeDataAPI()
-    node_data_api.from_NodeData(reply_node_data)
+    node_data_api = pydantic_types.NodeDataAPI.from_NodeData(reply_node_data)
 
     return node_data_api
 
@@ -42,8 +41,7 @@ def POST_graphs_F_nodes(graph_id: str, prompt_api: pydantic_types.PromptAPI):
 @api.get(_BASE_URL + "/graphs/{graph_id}/nodes")
 def GET_graphs_F_nodes(graph_id: str):
     reply_node_ids = _server_core.GET_graphs_F_nodes()
-    node_ids_api = pydantic_types.NodeIDsAPI()
-    node_ids_api.from_strings(reply_node_ids)
+    node_ids_api = pydantic_types.NodeIDsAPI.from_strings(reply_node_ids)
 
     return node_ids_api
 
@@ -51,8 +49,7 @@ def GET_graphs_F_nodes(graph_id: str):
 @api.get(_BASE_URL + "/graphs/{graph_id}/nodes/{node_id}")
 def GET_graphs_F_nodes_F(graph_id: str, node_id: str):
     reply_node_data = _server_core.GET_graphs_F_nodes_F(node_id)
-    node_data_api = pydantic_types.NodeDataAPI()
-    node_data_api.from_NodeData(reply_node_data)
+    node_data_api = pydantic_types.NodeDataAPI.from_NodeData(reply_node_data)
 
     return node_data_api
 
@@ -66,8 +63,7 @@ def GET_graphs_F_nodes_F_info(graph_id: str, node_id: str):
 @api.get(_BASE_URL + "/graphs/{graph_id}/views")
 def GET_graphs_F_views(graph_id: str):
     reply_view_names = _server_core.GET_graphs_F_views()
-    view_names_api = pydantic_types.ViewNamesAPI()
-    view_names_api.from_strings(reply_view_names)
+    view_names_api = pydantic_types.ViewNamesAPI.from_strings(reply_view_names)
 
     return view_names_api
 
@@ -76,8 +72,7 @@ def GET_graphs_F_views(graph_id: str):
 def POST_graphs_F_views_F(graph_id: str, view_name: str, view_upstream_api: pydantic_types.ViewUpstreamAPI):
     view_upstream = view_upstream_api.to_strings()
     reply_view_context = _server_core.POST_graphs_F_views_F(view_name, view_upstream)
-    view_context_api = pydantic_types.ViewContextAPI()
-    view_context_api.from_strings(reply_view_context)
+    view_context_api = pydantic_types.ViewContextAPI.from_strings(reply_view_context)
 
     return view_context_api
 
@@ -86,8 +81,7 @@ def POST_graphs_F_views_F(graph_id: str, view_name: str, view_upstream_api: pyda
 @api.get(_BASE_URL + "/system/models")
 def GET_system_models():
     reply_models = _server_core.GET_system_models()
-    models_api = pydantic_types.ModelNamesAPI()
-    models_api.from_strings(reply_models)
+    models_api = pydantic_types.ModelNamesAPI.from_strings(models=reply_models)
 
     return models_api
 

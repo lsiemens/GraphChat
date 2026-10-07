@@ -13,7 +13,7 @@ class PromptAPI(BaseModel):
     timestamp: str
     content: str
 
-    def to_NodeData(self):
+    def to_NodeData(self) -> node.NodeData:
         node_request = node.NodeRequest(self.timestamp, self.context, self.content)
         node_data = node.NodeData(None, self.model, self.upstream, node_request, None)
         return node_data
@@ -30,14 +30,16 @@ class NodeDataAPI(BaseModel):
     model: str
     costUSD: float | None
 
-    def from_NodeData(self, node_data: node.NodeData):
-        self.id = node_data.id
-        self.upstream = node_data.upstream
-        self.context = node_data.request.context
-        self.request = node_data.request.content
-        self.reply = node_data.reply.content
-        self.model = node_data.model
-        self.costUSD = node_data.reply.usage.cost_USD
+    @classmethod
+    def from_NodeData(cls, node_data: node.NodeData) -> "NodeDataAPI":
+        return cls(
+            id=node_data.id,
+            upstream=node_data.upstream,
+            context=node_data.request.context,
+            request=node_data.request.content,
+            reply=node_data.reply.content,
+            model=node_data.model,
+            costUSD=node_data.reply.usage.cost_USD)
 
 
 class NodeIDsAPI(BaseModel):
@@ -45,8 +47,9 @@ class NodeIDsAPI(BaseModel):
 
     ids: list[str]
 
-    def from_strings(self, ids: list[str]):
-        self.ids = ids
+    @classmethod
+    def from_strings(cls, ids: list[str]) -> "NodeIDsAPI":
+        return cls(ids=ids)
 
 
 class ModelNamesAPI(BaseModel):
@@ -54,8 +57,9 @@ class ModelNamesAPI(BaseModel):
 
     models: list[str]
 
-    def from_strings(self, models: list[str]):
-        self.models = models
+    @classmethod
+    def from_strings(cls, models: list[str]) -> "ModelNamesAPI":
+        return cls(models=models)
 
 
 class ViewNamesAPI(BaseModel):
@@ -63,8 +67,9 @@ class ViewNamesAPI(BaseModel):
 
     viewNames: list[str]
 
-    def from_strings(self, viewNames: list[str]):
-        self.viewNames = viewNames
+    @classmethod
+    def from_strings(cls, viewNames: list[str]) -> "ViewNamesAPI":
+        return cls(viewNames=viewNames)
 
 
 class ViewUpstreamAPI(BaseModel):
@@ -72,7 +77,7 @@ class ViewUpstreamAPI(BaseModel):
 
     upstream: list[str]
 
-    def to_strings(self):
+    def to_strings(self) -> list[str]:
         return self.upstream
 
 
@@ -81,5 +86,6 @@ class ViewContextAPI(BaseModel):
 
     context: list[str]
 
-    def from_strings(self, context: list[str]):
-        self.context = context
+    @classmethod
+    def from_strings(cls, context: list[str]) -> "ViewContextAPI":
+        return cls(context=context)
