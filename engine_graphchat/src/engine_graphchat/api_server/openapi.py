@@ -12,8 +12,12 @@ def ref(name, component_type="schemas"):
     return {"$ref": f"#/components/{component_type}/{name}"}
 
 
-def array_of(name):
-    return {"type": "array", "items": ref(name)}
+def array_of(schema):
+    return {"type": "array", "items": schema}
+
+
+def nullable(schema):
+    return {"anyOf": [schema, {"type": "null"}]}
 
 
 def object_schema(schema_name, properties):
@@ -107,22 +111,22 @@ SYSTEM_ENDPOINTS = {
 SCHEMAS = {
     **object_schema("PromptAPI", {
         "model": ref("ModelName"),
-        "upstream": array_of("NodeID"),
-        "context": array_of("NodeID"),
+        "upstream": array_of(ref("NodeID")),
+        "context": array_of(ref("NodeID")),
         "timestamp": {"type": "string"},
         "content": {"type": "string"},
     }),
     **object_schema("NodeDataAPI", {
         "id": ref("NodeID"),
-        "upstream": array_of("NodeID"),
-        "context": array_of("NodeID"),
+        "upstream": array_of(ref("NodeID")),
+        "context": array_of(ref("NodeID")),
         "request": {"type": "string"},
         "reply": {"type": "string"},
-        "model": {"type": "string"},
-        "costUSD": {"type": "number"},
+        "model": ref("ModelName"),
+        "costUSD": nullable({"type": "number"}),
     }),
-    **object_schema("NodeIDsAPI", {"ids": array_of("NodeID")}),
-    **object_schema("ModelNamesAPI", {"models": array_of("ModelName")}),
+    **object_schema("NodeIDsAPI", {"ids": array_of(ref("NodeID"))}),
+    **object_schema("ModelNamesAPI", {"models": array_of(ref("ModelName"))}),
     **object_schema("Error", {"message": {"type": "string"}}),
     "GraphID": {
         "type": "string",
@@ -156,7 +160,7 @@ REQUESTBODIES = {
 
 
 def get_openapi():
-    host = "0.0.0.0"
+    host = "127.0.0.1"
     port = "8000"
 
     schema = {
