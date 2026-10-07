@@ -6,6 +6,10 @@ enabled = false
 [generation]
 max-examples = 50
 
+[[operations]]
+include-name = "POST /graphs/0/views/{view_name}"
+parameters = { view_name = "simple_dfs" }
+
 [phases]
 fuzzing.enabled = false
 stateful.enabled = false

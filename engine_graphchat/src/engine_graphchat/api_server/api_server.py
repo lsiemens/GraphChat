@@ -112,8 +112,8 @@ class GraphChatServer:
                 view_upstream_api = api_json.load_JSON_as_type(JSON_request, api_types.ViewUpstreamAPI)
                 view_upstream = view_upstream_api.to_strings()
                 reply_view_context = self._server_core.POST_graphs_F_views_F(view_name, view_upstream)
-                view_context_api = api_types.NodeDataApi()
-                view_context_api.from_NodeData(reply_view_context)
+                view_context_api = api_types.ViewContextAPI()
+                view_context_api.from_strings(reply_view_context)
                 JSON_reply = api_json.dump_JSON_as_type(view_context_api, api_types.ViewContextAPI)
 
             case _:
