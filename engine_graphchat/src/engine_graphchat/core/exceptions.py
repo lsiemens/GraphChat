@@ -8,6 +8,15 @@ class GraphChatError(Exception):
     The base class for GraphChat errors.
     """
 
+    def format(self, message):
+        if not isinstance(message, str):
+            raise TypeError("Error message must be a string")
+
+        if message.strip() == "":
+            raise ValueError("Error message must not be empty")
+
+        return {"type": type(self).__name__, "message": message}
+
 
 class NotFoundError(GraphChatError):
     """Raised when an object or resource can not be found."""

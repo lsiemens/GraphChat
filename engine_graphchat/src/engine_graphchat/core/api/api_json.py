@@ -36,6 +36,9 @@ def load_JSON_as_type(text, target):
     except (json.JSONDecodeError, TypeError) as e:
         raise exceptions.ServiceError("Failed decode json") from e
 
+    if not isinstance(data, dict):
+        raise exceptions.ContentError("Incompatible structure: JSON must load as a dictionary")
+
     if set(data) != set(hints):
         raise exceptions.ContentError("Incompatible structure: JSON fields do not match the target fields")
 

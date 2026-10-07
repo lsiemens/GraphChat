@@ -1,3 +1,6 @@
+from engine_graphchat.core import exceptions
+
+
 OPENAPI_VERSION = "3.1.1"
 
 
@@ -70,20 +73,25 @@ def parameter_schema(schema_name, parameter_name, type_ref, description):
     }
 
 
-def http_method(method, operationId, responses_type_ref, request_type_ref=None):
+def http_method(method, operationId, request_type_ref, responses_type_ref, error_codes):
     data = {
         method: {
             "operationId": operationId,
             "responses": {
                 "200": ref(responses_type_ref, "responses"),
-                "404": ref("Error", "responses"),
-                "422": ref("Error", "responses"),
             },
             #"parameters": [ref("GraphID", "parameters")],
         },
     }
+
     if request_type_ref is not None:
         data[method]["requestBody"] = ref(request_type_ref, "requestBodies")
+
+    for status_code in error_codes:
+        if status_code < 400:
+            raise exceptions.ContentError("openAPI: error codes are 4XX or 5XX")
+        data[method]["responses"][str(status_code)] = ref("Error", "responses")
+
     return data
 
 
@@ -95,15 +103,15 @@ INFO = {
 
 NODE_ENDPOINTS = {
     "/graphs/0/nodes": {
-        **http_method("get", "GET_graph_nodes", "NodeIDsAPI"),
-        **http_method("post", "POST_graph_nodes", "NodeDataAPI", "PromptAPI"),
+        **http_method("get", "GET_graph_nodes", None, "NodeIDsAPI", []),
+        **http_method("post", "POST_graph_nodes", "PromptAPI", "NodeDataAPI", [400, 404, 415, 422]),
     },
 }
 
 
 SYSTEM_ENDPOINTS = {
     "/system/models": {
-        **http_method("get", "GET_system_models", "ModelNamesAPI"),
+        **http_method("get", "GET_system_models", None, "ModelNamesAPI", []),
     },
 }
 
@@ -127,7 +135,10 @@ SCHEMAS = {
     }),
     **object_schema("NodeIDsAPI", {"ids": array_of(ref("NodeID"))}),
     **object_schema("ModelNamesAPI", {"models": array_of(ref("ModelName"))}),
-    **object_schema("Error", {"message": {"type": "string"}}),
+    **object_schema("Error", {
+        "type": {"type": "string"},
+        "message": {"type": "string"},
+    }),
     "GraphID": {
         "type": "string",
         "pattern": "^[0-9a-f]{32}$",

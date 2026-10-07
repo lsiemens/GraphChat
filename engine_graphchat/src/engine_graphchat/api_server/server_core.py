@@ -52,14 +52,18 @@ class ServerCore:
         return self.DM.llm_service.get_model_names()
 
     def exception_handler(self, exception):
-        status = 500
         if isinstance(exception, exceptions.NotFoundError):
             status = 404
+            logger.info("HTTP request failed: %s", exception)
         elif isinstance(exception, exceptions.ContentError):
             status = 400
+            logger.info("HTTP request failed: %s", exception)
         elif isinstance(exception, exceptions.UpstreamError):
             status = 502
-        message = f"HTTP request failed with `{exception}`"
+            logger.exception("HTTP request failed")
+        else:
+            status = 500
+            logger.exception("HTTP request failed")
 
-        logger.exception("HTTP request failed")
-        return status, message
+        body = exception.format(f"ServerCore failed with `{exception}`")
+        return status, body

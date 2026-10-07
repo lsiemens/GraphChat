@@ -64,10 +64,10 @@ class HTTPConnection:
         try:
             self._HTTP_request.update()
         except exceptions.HTTPError as e:
-            status, message = self.exception_handler(e)
+            status, body = self.exception_handler(e)
             HTTP_error = http_message.MinorHTTPError(status, "close")
-            HTTP_error.body = message
-            HTTP_error.headers["content-type"] = "txt/plain"
+            HTTP_error.body = body
+            HTTP_error.headers["content-type"] = "application/json"
             self._HTTP_reply_que.append(HTTP_error)
             return
             # TODO disable reading
@@ -89,10 +89,10 @@ class HTTPConnection:
             try:
                 current_reply.serialize()
             except exceptions.HTTPError as e:
-                status, message = self.exception_handler(e)
+                status, body = self.exception_handler(e)
                 HTTP_error = http_message.MinorHTTPError(status, "close")
-                HTTP_error.body = message
-                HTTP_error.headers["content-type"] = "txt/plain"
+                HTTP_error.body = body
+                HTTP_error.headers["content-type"] = "application/json"
                 self._HTTP_reply_que[0] = HTTP_error
                 current_reply = self._HTTP_reply_que[0]
                 # catch exception from serialize in Minor error
@@ -137,22 +137,18 @@ class HTTPConnection:
             try:
                 self._process_request_core(HTTP_request, HTTP_reply)
             except exceptions.HTTPError as e:
-                status, message = self.exception_handler(e)
+                status, body = self.exception_handler(e)
                 HTTP_error = http_message.MinorHTTPError(status, "close")
-                HTTP_error.body = message
-                HTTP_error.headers["content-type"] = "txt/plain"
+                HTTP_error.body = body
+                HTTP_error.headers["content-type"] = "application/json"
                 self._HTTP_reply_que.append(HTTP_error)
         self._HTTP_reply_que.append(HTTP_reply)
 
     def exception_handler(self, exception):
-        message = f"HTTP request failed with `{exception}`"
         if isinstance(exception, exceptions.NotFoundError):
             status = 404
             logger.info("HTTP request failed: %s", exception)
         elif isinstance(exception, exceptions.ParseError):
-            status = 400
-            logger.info("HTTP request failed: %s", exception)
-        elif isinstance(exception, exceptions.ProtocolError):
             status = 400
             logger.info("HTTP request failed: %s", exception)
         elif isinstance(exception, exceptions.SerializeError):
@@ -162,7 +158,8 @@ class HTTPConnection:
             status = 500
             logger.exception("HTTP request failed")
 
-        return status, message
+        body = exception.format(f"HTTP request failed with `{exception}`")
+        return status, body
 
 
 def process_request_all_good(HTTP_request, HTTP_reply):

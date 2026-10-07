@@ -92,7 +92,7 @@ def configure_CORS(allow_origins, allow_methods, allow_headers, expose_headers, 
         origin = HTTP_request.headers["origin"]
 
         if origin not in allow_origins:
-            set_simple_reply(403, "", "", HTTP_reply)
+            set_simple_reply(403, "CORS unauthorized client", ".txt", HTTP_reply)
             return
 
         # CORS preflight request
@@ -108,7 +108,7 @@ def configure_CORS(allow_origins, allow_methods, allow_headers, expose_headers, 
 
         # From the specifications GET, HEAD and POST are CORS-safelisted
         if method not in all_allowed_methods:
-            set_simple_reply(403, "", "", HTTP_reply)
+            set_simple_reply(403, "CORS unauthorized client", ".txt", HTTP_reply)
             return
 
         HTTP_reply.headers["access-control-allow-origin"] = origin
@@ -156,6 +156,17 @@ def set_simple_reply(status_code, body, ext, HTTP_reply):
     HTTP_reply.headers["connection"] = "close"
 
 
+def set_error_reply(status_code, message, HTTP_reply):
+    if HTTP_reply.status_code is not None:
+        return
+
+    HTTP_reply.status_code = status_code
+    HTTP_reply.body = {"type": "MiddlewareError", "message": message}
+
+    HTTP_reply.headers["content-type"] = MIME[".json"]
+    HTTP_reply.headers["connection"] = "close"
+
+
 def make_simple_page(title, content):
     page = "<!DOCTYPE html>" \
            "<html>" \
@@ -172,9 +183,9 @@ def make_simple_page(title, content):
 def configure_routing(patterns, methods):
     for pattern in patterns.values():
         if pattern.endswith("/"):
-            raise exceptions.ProtocolError("Routing patterns cannot end with \"/\"")
+            raise exceptions.HTTPError("Routing patterns cannot end with \"/\"")
         if not pattern.startswith("/"):
-            raise exceptions.ProtocolError("Routing patterns must begin with \"/\"")
+            raise exceptions.HTTPError("Routing patterns must begin with \"/\"")
 
     patterns = {label: pattern_blocks[1:].split("/") for label, pattern_blocks in patterns.items()}
     for pattern_blocks in patterns.values():

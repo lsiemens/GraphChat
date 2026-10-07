@@ -89,8 +89,8 @@ def GET_system_models():
 # General configuration
 @api.exception_handler(exceptions.GraphChatError)
 async def exception_handler(request: Request, exc: exceptions.GraphChatError):
-    status, message = _server_core.exception_handler(exc)
-    content = {"message": message}
+    status, body = _server_core.exception_handler(exc)
+    content = body
     return JSONResponse(status_code=status, content=content)
 
 

@@ -4,6 +4,7 @@ HTTP messages
 
 import logging
 import re
+import json
 import email.utils
 
 from . import exceptions
@@ -98,30 +99,37 @@ class HTTPReply:
             if is_HTTP_header_field(name, value):
                 headers[name.lower()] = value
             else:
-                raise exceptions.ProtocolError(f"Malformed reply header field {repr(key)}:{repr(value)}")
+                raise exceptions.ReplyProtocolError(f"Malformed reply header field {repr(key)}:{repr(value)}")
 
         # Validate status code
         status_code = self.status_code
         if self.status_code not in STATUS_CODES:
-            raise exceptions.ProtocolError(f"The status code {self.status_code} is not implemented!")
+            raise exceptions.ReplyProtocolError(f"The status code {self.status_code} is not implemented!")
         reason_phrase = STATUS_CODES[self.status_code]
 
         # Format body
         body = self.body
+        if isinstance(body, dict):
+            try:
+                body = json.dumps(body)
+            except (TypeError, ValueError) as e:
+                raise exceptions.SerializeError("Failed to serialize JSON body") from e
+
         if isinstance(body, str):
-            body = self.body.encode(ENCODING_BODY)
+            body = body.encode(ENCODING_BODY)
+
         if not isinstance(body, bytes):
             raise exceptions.SerializeError("HTTP reply body must be a string or bytes")
 
         if self._force_no_content(status_code):
             if len(body) != 0:
-                logger.warning("HTTP reply with status code %d had a non-empty body", status_code)
+                raise exceptions.ReplyProtocolError(f"HTTP reply with status code {status_code} had a non-empty body")
             body = b""
 
         if len(body) != 0:
             headers["content-length"] = str(len(body))
             if "content-type" not in headers:
-                raise exceptions.SerializeError("HTTP replies with a body must declare the content type")
+                raise exceptions.ReplyProtocolError("HTTP replies with a body must declare the content type")
 
         # Format reply
         reply = f"{HTTP_VERSION} {status_code} {reason_phrase}\r\n"
@@ -181,7 +189,7 @@ class HTTPRequest:
                     if len(parts) != 3:
                         raise exceptions.ParseError("Could not read METHOD, TARGET, VERSION")
                     if not is_HTTP_request_line(*parts):
-                        raise exceptions.ProtocolError("Invalid characters in HTTP request-line")
+                        raise exceptions.RequestProtocolError("Invalid characters in HTTP request-line")
                     self.request_line = (parts[0].upper(), parts[1], parts[2].upper())
                     continue
 
@@ -190,18 +198,18 @@ class HTTPRequest:
                     if "content-length" in self.headers:
                         length = self.headers["content-length"]
                         if not length.isdigit():
-                            raise exceptions.ProtocolError("Failed to update HTTP request: Invalid characters in \"content-length\"")
+                            raise exceptions.RequestProtocolError("Failed to update HTTP request: Invalid characters in \"content-length\"")
                         self.headers["content-length"] = int(self.headers["content-length"])
                     self._reading_head = False
                     break
 
                 if ":" not in line:
-                    raise exceptions.ProtocolError("Header-field missing \":\"")
+                    raise exceptions.RequestProtocolError("Header-field missing \":\"")
 
                 name, value = line.split(":", 1)
 
                 if not is_HTTP_header_field(name, value):
-                    raise exceptions.ProtocolError("Failed to update HTTP request: Invalid characters in header-field name or value")
+                    raise exceptions.RequestProtocolError("Failed to update HTTP request: Invalid characters in header-field name or value")
 
                 value = value.lstrip()
                 self.headers[name.lower()] = value
