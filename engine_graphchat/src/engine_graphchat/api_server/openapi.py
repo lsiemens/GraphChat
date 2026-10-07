@@ -16,9 +16,9 @@ def array_of(name):
     return {"type": "array", "items": ref(name)}
 
 
-def object(name, properties):
+def object_schema(schema_name, properties):
     return {
-        name: {
+        schema_name: {
             "type": "object",
             "properties": properties,
             "required": list(properties.keys()),
@@ -27,9 +27,9 @@ def object(name, properties):
     }
 
 
-def json_response(name, type_ref, description):
+def json_response_schema(schema_name, type_ref, description):
     return {
-        name: {
+        schema_name: {
             "description": description,
             "content": {
                 "application/json": {
@@ -40,35 +40,118 @@ def json_response(name, type_ref, description):
     }
 
 
+def json_request_schema(schema_name, type_ref, description):
+    return {
+        schema_name: {
+            "description": description,
+            "content": {
+                "application/json": {
+                    "schema": ref(type_ref),
+                },
+            },
+            "required": True,
+        },
+    }
+
+
+def parameter_schema(schema_name, parameter_name, type_ref, description):
+    return {
+        schema_name: {
+            "name": parameter_name,
+            "in": "path",
+            "required": True,
+            "description": description,
+            "schema": ref(type_ref),
+        },
+    }
+
+
+def http_method(method, operationId, responses_type_ref, request_type_ref=None):
+    data = {
+        method: {
+            "operationId": operationId,
+            "responses": {
+                "200": ref(responses_type_ref, "responses"),
+                "404": ref("Error", "responses"),
+                "422": ref("Error", "responses"),
+            },
+            #"parameters": [ref("GraphID", "parameters")],
+        },
+    }
+    if request_type_ref is not None:
+        data[method]["requestBody"] = ref(request_type_ref, "requestBodies")
+    return data
+
+
 INFO = {
     "title": "engine_graphchat",
     "version": "1",
 }
 
 
-GET_SYSTEM_MODELS = {
+NODE_ENDPOINTS = {
+    "/graphs/0/nodes": {
+        **http_method("get", "GET_graph_nodes", "NodeIDsAPI"),
+        **http_method("post", "POST_graph_nodes", "NodeDataAPI", "PromptAPI"),
+    },
+}
+
+
+SYSTEM_ENDPOINTS = {
     "/system/models": {
-        "get": {
-            "operationId": "GET_system_models",
-            "responses": {
-                "200": ref("ModelNamesAPI", "responses"),
-            },
-        },
+        **http_method("get", "GET_system_models", "ModelNamesAPI"),
     },
 }
 
 
 SCHEMAS = {
-    **object("ModelNamesAPI", {"models": array_of("ModelName")}),
+    **object_schema("PromptAPI", {
+        "model": ref("ModelName"),
+        "upstream": array_of("NodeID"),
+        "context": array_of("NodeID"),
+        "timestamp": {"type": "string"},
+        "content": {"type": "string"},
+    }),
+    **object_schema("NodeDataAPI", {
+        "id": ref("NodeID"),
+        "upstream": array_of("NodeID"),
+        "context": array_of("NodeID"),
+        "request": {"type": "string"},
+        "reply": {"type": "string"},
+        "model": {"type": "string"},
+        "costUSD": {"type": "number"},
+    }),
+    **object_schema("NodeIDsAPI", {"ids": array_of("NodeID")}),
+    **object_schema("ModelNamesAPI", {"models": array_of("ModelName")}),
+    **object_schema("Error", {"message": {"type": "string"}}),
+    "GraphID": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{32}$",
+    },
+    "NodeID": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$",
+    },
     "ModelName": {
         "type": "string",
-        "pattern": "^[!-~]+$",
     },
 }
 
 
 RESPONSES = {
-    **json_response("ModelNamesAPI", "ModelNamesAPI", "List available LLM models"),
+    **json_response_schema("NodeDataAPI", "NodeDataAPI", "A node in the graph"),
+    **json_response_schema("NodeIDsAPI", "NodeIDsAPI", "List all of the NodeIDs in the graph"),
+    **json_response_schema("ModelNamesAPI", "ModelNamesAPI", "List available LLM models"),
+    **json_response_schema("Error", "Error", "Standard HTTP error"),
+}
+
+
+PARAMETERS = {
+    **parameter_schema("GraphID", "graph_id", "GraphID", "Index of the desired graph"),
+}
+
+REQUESTBODIES = {
+    **json_request_schema("PromptAPI", "PromptAPI", "Prompt for the LLM including configuration and context"),
 }
 
 
@@ -80,7 +163,16 @@ def get_openapi():
         "openapi": OPENAPI_VERSION,
         "info": INFO,
         "servers": get_servers(host, port),
-        "paths": {**GET_SYSTEM_MODELS},
-        "components": {"schemas": SCHEMAS, "responses": RESPONSES}}
+        "paths": {
+            **NODE_ENDPOINTS,
+            **SYSTEM_ENDPOINTS,
+        },
+        "components": {
+            "schemas": SCHEMAS,
+            "responses": RESPONSES,
+            "parameters": PARAMETERS,
+            "requestBodies": REQUESTBODIES,
+        },
+    }
 
     return schema

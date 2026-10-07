@@ -12,3 +12,10 @@ stateful.enabled = false
 
 [reports.junit]
 enabled = true
+
+# fastAPI supports multiple HTTP methods per endpoint, however checks of the
+# header field `Allow` will only show whichever method came first in the code.
+# This was a known issue in `Starlette` and a fix should propagate to fastAPI
+# when it uses a version of `Starlette` where this issue has been resolved.
+[checks.allow_header_conformance]
+enabled = false
