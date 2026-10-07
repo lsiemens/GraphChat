@@ -33,8 +33,8 @@ def load_JSON_as_type(text, target):
 
     try:
         data = json.loads(text)
-    except (json.JSONDecodeError, TypeError) as e:
-        raise exceptions.ServiceError("Failed decode json") from e
+    except (json.JSONDecodeError, TypeError, UnicodeDecodeError) as e:
+        raise exceptions.ContentError("Failed decode json") from e
 
     if not isinstance(data, dict):
         raise exceptions.ContentError("Incompatible structure: JSON must load as a dictionary")
@@ -59,4 +59,7 @@ def dump_JSON_as_type(obj, target):
     hints = typing.get_type_hints(target)
 
     data = {key: getattr(obj, key) for key in hints.keys()}
-    return json.dumps(data)
+    try:
+        return json.dumps(data)
+    except (TypeError, ValueError) as e:
+        raise exceptions.ServiceError("Failed to serialize JSON") from e

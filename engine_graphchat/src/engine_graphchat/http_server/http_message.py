@@ -23,6 +23,7 @@ STATUS_CODES = {
     415: "Unsupported Media Type",
     500: "Internal Server Error",
     501: "Not Implemented",
+    502: "Bad Gateway",
     505: "HTTP Version Not Supported",
 }
 HTTP_VERSION = "HTTP/1.1"
