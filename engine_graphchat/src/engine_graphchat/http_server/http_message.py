@@ -67,14 +67,6 @@ def CriticalHTTPError(status_code):
     return reply.encode(ENCODING_HEADER)
 
 
-def MinorHTTPError(status_code, close="close"):
-    reply = HTTPReply()
-    reply.status_code = status_code
-    reply.headers["connection"] = close
-    reply.serialize()
-    return reply
-
-
 class HTTPReply:
     def __init__(self, as_head=False):
         self.status_code = None
@@ -156,6 +148,7 @@ class HTTPRequest:
         self.headers = {}
         self.body = b""
 
+        self.invalid_buffer = False
         self.buffer = buffer
         self._bytes_header = 0
         self._is_ready = False
@@ -178,6 +171,9 @@ class HTTPRequest:
             return None
 
     def update(self):
+        if self.invalid_buffer:
+            return
+
         if self._is_ready:
             return
 

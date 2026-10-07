@@ -65,8 +65,10 @@ class HTTPServer:
                         if event & select.POLLOUT:
                             conn.on_POLLOUT()
 
-                        if conn.need_POLLOUT() != conn.POLLOUT_state:
-                            flags = select.POLLIN | (select.POLLOUT if conn.need_POLLOUT() else 0)
+                        if (conn.need_POLLOUT() != conn.POLLOUT_state) or (not conn.need_POLLIN()):
+                            flag_POLLIN = (select.POLLIN if conn.need_POLLIN() else 0)
+                            flag_POLLOUT = (select.POLLOUT if conn.need_POLLOUT() else 0)
+                            flags = flag_POLLIN | flag_POLLOUT
                             poller.modify(conn.fileno(), flags)
                             conn.POLLOUT_state = conn.need_POLLOUT()
 

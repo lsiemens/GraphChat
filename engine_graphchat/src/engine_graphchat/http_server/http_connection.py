@@ -39,6 +39,9 @@ class HTTPConnection:
     def need_POLLOUT(self):
         return len(self._HTTP_reply_que) != 0
 
+    def need_POLLIN(self):
+        return not self._HTTP_request.invalid_buffer
+
     def fileno(self):
         return self._fileno
 
@@ -65,12 +68,18 @@ class HTTPConnection:
             self._HTTP_request.update()
         except exceptions.HTTPError as e:
             status, body = self.exception_handler(e)
-            HTTP_error = http_message.MinorHTTPError(status, "close")
-            HTTP_error.body = body
+
+            HTTP_error = http_message.HTTPReply()
+            HTTP_error.status_code = status
             HTTP_error.headers["content-type"] = "application/json"
+            HTTP_error.headers["connection"] = "close"
+            HTTP_error.body = body
+
+            # skip self._process_request
             self._HTTP_reply_que.append(HTTP_error)
+            self._HTTP_request.invalid_buffer = True
+            logger.info("HTTP request buffer invalidated")
             return
-            # TODO disable reading
 
         if self._HTTP_request.is_ready:
             buffer = self._HTTP_request.buffer
@@ -90,12 +99,16 @@ class HTTPConnection:
                 current_reply.serialize()
             except exceptions.HTTPError as e:
                 status, body = self.exception_handler(e)
-                HTTP_error = http_message.MinorHTTPError(status, "close")
-                HTTP_error.body = body
+
+                HTTP_error = http_message.HTTPReply()
+                HTTP_error.status_code = status
                 HTTP_error.headers["content-type"] = "application/json"
+                HTTP_error.headers["connection"] = "close"
+                HTTP_error.body = body
+
+                # replace the current reply with this error message
                 self._HTTP_reply_que[0] = HTTP_error
                 current_reply = self._HTTP_reply_que[0]
-                # catch exception from serialize in Minor error
 
         if len(current_reply.buffer) == 0:
             if "connection" in current_reply.headers:
@@ -118,8 +131,8 @@ class HTTPConnection:
             logger.warning("Connection closed during write.")
             self._is_closed = True
             self._socket.close()
-        except BlockingIOError:
-            pass  # try again
+        except BlockingIOError as e:
+            logger.debug("Socket failed to send: %s", e)
 
     def _process_request(self, HTTP_request):
         # The response to a HEAD request must be identical to that of a GET
@@ -138,9 +151,13 @@ class HTTPConnection:
                 self._process_request_core(HTTP_request, HTTP_reply)
             except exceptions.HTTPError as e:
                 status, body = self.exception_handler(e)
-                HTTP_error = http_message.MinorHTTPError(status, "close")
-                HTTP_error.body = body
+
+                HTTP_error = http_message.HTTPReply()
+                HTTP_error.status_code = status
                 HTTP_error.headers["content-type"] = "application/json"
+                HTTP_error.headers["connection"] = "close"
+                HTTP_error.body = body
+
                 self._HTTP_reply_que.append(HTTP_error)
         self._HTTP_reply_que.append(HTTP_reply)
 

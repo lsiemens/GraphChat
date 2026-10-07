@@ -73,24 +73,32 @@ def parameter_schema(schema_name, parameter_name, type_ref, description):
     }
 
 
-def http_method(method, operationId, request_type_ref, responses_type_ref, error_codes):
+def http_method(method, operationId, responses_type_ref, **kwargs):
     data = {
         method: {
             "operationId": operationId,
             "responses": {
                 "200": ref(responses_type_ref, "responses"),
             },
-            #"parameters": [ref("GraphID", "parameters")],
         },
     }
 
-    if request_type_ref is not None:
-        data[method]["requestBody"] = ref(request_type_ref, "requestBodies")
+    if "parameters" in kwargs:
+        parameters = kwargs["parameters"]
+        if len(parameters) > 0:
+            data[method]["parameters"] = parameters
 
-    for status_code in error_codes:
-        if status_code < 400:
-            raise exceptions.ContentError("openAPI: error codes are 4XX or 5XX")
-        data[method]["responses"][str(status_code)] = ref("Error", "responses")
+    if "request_type_ref" in kwargs:
+        request_type_ref = kwargs["request_type_ref"]
+        if request_type_ref is not None:
+            data[method]["requestBody"] = ref(request_type_ref, "requestBodies")
+
+    if "error_codes" in kwargs:
+        error_codes = kwargs["error_codes"]
+        for status_code in error_codes:
+            if status_code < 400:
+                raise exceptions.ContentError("openAPI: error codes are 4XX or 5XX")
+            data[method]["responses"][str(status_code)] = ref("Error", "responses")
 
     return data
 
@@ -103,15 +111,30 @@ INFO = {
 
 NODE_ENDPOINTS = {
     "/graphs/0/nodes": {
-        **http_method("get", "GET_graph_nodes", None, "NodeIDsAPI", []),
-        **http_method("post", "POST_graph_nodes", "PromptAPI", "NodeDataAPI", [400, 404, 415, 422]),
+        **http_method("get", "GET_graph_node_list", "NodeIDsAPI", ),
+        **http_method(
+            "post",
+            "POST_graph_node",
+            "NodeDataAPI",
+            request_type_ref="PromptAPI",
+            error_codes=[400, 404, 415, 422],
+        ),
     },
+    "/graphs/0/nodes/{node_id}": {
+        **http_method(
+            "get",
+            "GET_graph_node",
+            "NodeDataAPI",
+            parameters=[ref("NodeID", "parameters")],
+            error_codes=[400, 404],
+        ),
+    }
 }
 
 
 SYSTEM_ENDPOINTS = {
     "/system/models": {
-        **http_method("get", "GET_system_models", None, "ModelNamesAPI", []),
+        **http_method("get", "GET_system_models", "ModelNamesAPI"),
     },
 }
 
@@ -163,6 +186,7 @@ RESPONSES = {
 
 PARAMETERS = {
     **parameter_schema("GraphID", "graph_id", "GraphID", "Index of the desired graph"),
+    **parameter_schema("NodeID", "node_id", "NodeID", "Identifier of the desired node"),
 }
 
 REQUESTBODIES = {
