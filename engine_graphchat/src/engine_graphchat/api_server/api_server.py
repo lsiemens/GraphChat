@@ -10,9 +10,11 @@ class GraphChatServer:
 
     def __init__(self, CORS_settings):
         self._server_core = server_core.ServerCore()
-        self._openapi_json = api_json.json.dumps(self._server_core.openapi_schema)
 
         self.set_CORS_headers = http_middleware.configure_CORS(*CORS_settings)
+
+        JSON_openapi = api_json.json.dumps(self._server_core.openapi_schema)
+        self.filter_openapi = http_middleware.configure_openAPI(JSON_openapi)
 
         route_patterns = {
             "graphs_F_nodes": "/graphs/{graph_id}/nodes",
@@ -22,18 +24,21 @@ class GraphChatServer:
             "graphs_F_views_F": "/graphs/{graph_id}/views/{view_name}",
             "system_models": "/system/models",
         }
+        route_methods = {
+            "graphs_F_nodes": ["GET", "POST"],
+            "graphs_F_nodes_F": ["GET"],
+            "graphs_F_nodes_F_info": ["GET"],
+            "graphs_F_views": ["GET"],
+            "graphs_F_views_F": ["POST"],
+            "system_models": ["GET"],
+        }
         route_patterns = {key: self._Base_URL + value for key, value in route_patterns.items()}
-        self.rout_URL = http_middleware.configure_routing(route_patterns)
+        self.route_URL, self.filter_allowed_route_methods = http_middleware.configure_routing(route_patterns, route_methods)
 
     def GET(self, HTTP_request, HTTP_reply):
         _, target, _ = HTTP_request.request_line
 
-        if target == "/openapi.json":
-            JSON_reply = self._openapi_json
-            http_middleware.set_simple_reply(200, JSON_reply, ".json", HTTP_reply)
-            return
-
-        label, url_parameters = self.rout_URL(target)
+        label, url_parameters = self.route_URL(target)
 
         # --- Enter Internal CORE --- #
         JSON_reply = "{}"
@@ -68,7 +73,7 @@ class GraphChatServer:
                 JSON_reply = api_json.dump_JSON_as_type(models_api, api_types.ModelNamesAPI)
 
             case _:
-                http_middleware.set_simple_reply(501, "", "", HTTP_reply)
+                http_middleware.set_simple_reply(500, "", "", HTTP_reply)
                 return
         # --- Exit Internal CORE --- #
 
@@ -81,10 +86,15 @@ class GraphChatServer:
             http_middleware.set_simple_reply(400, "", "", HTTP_reply)
             return
 
-        if HTTP_request.headers["content-type"] != "application/json":
-            http_middleware.set_simple_reply(400, "", "", HTTP_reply)
+        if "content-type" not in HTTP_request.headers:
+            http_middleware.set_simple_reply(415, "", "", HTTP_reply)
+            return
 
-        label, url_parameters = self.rout_URL(target)
+        if HTTP_request.headers["content-type"] != "application/json":
+            http_middleware.set_simple_reply(415, "", "", HTTP_reply)
+            return
+
+        label, url_parameters = self.route_URL(target)
         JSON_request = HTTP_request.body
 
         # --- Enter Internal CORE --- #
@@ -107,7 +117,7 @@ class GraphChatServer:
                 JSON_reply = api_json.dump_JSON_as_type(view_context_api, api_types.ViewContextAPI)
 
             case _:
-                http_middleware.set_simple_reply(501, "", "", HTTP_reply)
+                http_middleware.set_simple_reply(500, "", "", HTTP_reply)
                 return
 
         # --- Exit Internal CORE --- #
@@ -115,14 +125,24 @@ class GraphChatServer:
         http_middleware.set_simple_reply(200, JSON_reply, ".json", HTTP_reply)
 
     def DELETE(self, HTTP_request, HTTP_reply):
-        http_middleware.set_simple_reply(501, "", "", HTTP_reply)
+        http_middleware.set_simple_reply(500, "", "", HTTP_reply)
 
     def process_HTTP(self, HTTP_request, HTTP_reply):
         if HTTP_reply.status_code is not None:
             return
 
         self.set_CORS_headers(HTTP_request, HTTP_reply)
-        method, _, _ = HTTP_request.request_line
+        self.filter_openapi(HTTP_request, HTTP_reply)
+
+        if HTTP_reply.status_code is not None:
+            return
+
+        method, target, _ = HTTP_request.request_line
+        label, _ = self.route_URL(target)
+        self.filter_allowed_route_methods(method, label, HTTP_reply)
+
+        if HTTP_reply.status_code is not None:
+            return
 
         try:
             match method:
@@ -139,7 +159,7 @@ class GraphChatServer:
                     return
 
                 case _:
-                    http_middleware.set_simple_reply(400, "", "", HTTP_reply)
+                    http_middleware.set_simple_reply(500, "", "", HTTP_reply)
                     return
         except exceptions.GraphChatError as e:
             status, message = self._server_core.exception_handler(e)

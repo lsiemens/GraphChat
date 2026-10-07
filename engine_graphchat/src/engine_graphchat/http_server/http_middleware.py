@@ -118,6 +118,29 @@ def configure_CORS(allow_origins, allow_methods, allow_headers, expose_headers, 
     return set_CORS_headers
 
 
+def configure_openAPI(openapi_json):
+    def filter_openapi(HTTP_request, HTTP_reply):
+        if HTTP_reply.status_code is not None:
+            return
+
+        method, target, _ = HTTP_request.request_line
+
+        if target != "/openapi.json":
+            return
+
+        if method != "GET":
+            HTTP_reply.status_code = 405
+            HTTP_reply.headers["connection"] = "close"
+            HTTP_reply.headers["allow"] = "GET"
+            return
+
+        HTTP_reply.status_code = 200
+        HTTP_reply.body = openapi_json
+        HTTP_reply.headers["content-type"] = MIME[".json"]
+        HTTP_reply.headers["connection"] = "close"
+    return filter_openapi
+
+
 def set_simple_reply(status_code, body, ext, HTTP_reply):
     if HTTP_reply.status_code is not None:
         return
@@ -146,7 +169,7 @@ def make_simple_page(title, content):
 
 
 # TODO add simple radix routing
-def configure_routing(patterns):
+def configure_routing(patterns, methods):
     for pattern in patterns.values():
         if pattern.endswith("/"):
             raise exceptions.ProtocolError("Routing patterns cannot end with \"/\"")
@@ -205,4 +228,20 @@ def configure_routing(patterns):
             return label, parameters
         raise exceptions.NotFoundError(f"Failed to route path: {path}")
 
-    return route_URL
+    def filter_allowed_route_methods(method, label, HTTP_reply):
+        if HTTP_reply.status_code is not None:
+            return
+
+        if label not in methods:
+            raise exceptions.HTTPError("Route label is not in route methods")
+
+        allowed_methods = methods[label]
+
+        if method in allowed_methods:
+            return
+
+        HTTP_reply.status_code = 405
+        HTTP_reply.headers["connection"] = "close"
+        HTTP_reply.headers["allow"] = ", ".join(allowed_methods)
+
+    return route_URL, filter_allowed_route_methods

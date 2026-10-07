@@ -9,11 +9,21 @@ import email.utils
 from . import exceptions
 
 logger = logging.getLogger(__name__)
-STATUS_CODES = {200: "OK", 201: "Created", 204: "No Content",
-                400: "Bad Request", 403: "Forbidden", 404: "Not Found",
-                411: "Length Required", 413: "Content Too Large",
-                500: "Internal Server Error", 501: "Not Implemented",
-                505: "HTTP Version Not Supported"}
+STATUS_CODES = {
+    200: "OK",
+    201: "Created",
+    204: "No Content",
+    400: "Bad Request",
+    403: "Forbidden",
+    404: "Not Found",
+    405: "Method Not Allowed",
+    411: "Length Required",
+    413: "Content Too Large",
+    415: "Unsupported Media Type",
+    500: "Internal Server Error",
+    501: "Not Implemented",
+    505: "HTTP Version Not Supported",
+}
 HTTP_VERSION = "HTTP/1.1"
 ENCODING_HEADER = "iso-8859-1"
 ENCODING_BODY = "utf-8"

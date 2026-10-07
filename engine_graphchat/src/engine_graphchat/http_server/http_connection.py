@@ -20,7 +20,7 @@ class HTTPConnection:
         self._address = address
         self._fileno = self._socket.fileno()
         self._is_closed = False
-        self.POLLOUT_state = None # for external use only
+        self.POLLOUT_state = None  # for external use only
 
         self._process_request_core = process_request_core
 
@@ -144,18 +144,17 @@ class HTTPConnection:
                 self._HTTP_reply_que.append(HTTP_error)
         self._HTTP_reply_que.append(HTTP_reply)
 
-
     def exception_handler(self, exception):
         message = f"HTTP request failed with `{exception}`"
         if isinstance(exception, exceptions.NotFoundError):
             status = 404
-            logger.info("HTTP request failed: resource not found")
+            logger.info("HTTP request failed: %s", exception)
         elif isinstance(exception, exceptions.ParseError):
             status = 400
-            logger.info("HTTP request failed: parse failure")
+            logger.info("HTTP request failed: %s", exception)
         elif isinstance(exception, exceptions.ProtocolError):
             status = 400
-            logger.info("HTTP request failed: protocol violation")
+            logger.info("HTTP request failed: %s", exception)
         elif isinstance(exception, exceptions.SerializeError):
             status = 500
             logger.exception("HTTP request failed: serialization failure")
@@ -164,7 +163,6 @@ class HTTPConnection:
             logger.exception("HTTP request failed")
 
         return status, message
-
 
 
 def process_request_all_good(HTTP_request, HTTP_reply):
