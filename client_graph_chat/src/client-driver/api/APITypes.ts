@@ -1,7 +1,7 @@
 import { Prompt, Node } from "@/types"
 import { type NodeID, toNodeID, toNodeIDs, fromNodeIDs } from "@/types"
 import { type ModelName, toModelName, toModelNames, fromModelName } from "@/types"
-import { type ViewName, toViewName, toViewNames, fromViewName } from "@/types"
+import { type ViewName, toViewNames } from "@/types"
 
 /* API Interfaces */
 

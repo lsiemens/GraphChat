@@ -1,4 +1,4 @@
-import { Prompt, Node, type NodeID, type ModelName } from "@/types"
+import { Prompt, Node, type NodeID, type ModelName, type ViewName } from "@/types"
 
 export interface EngineAPI {
   sendPrompt(prompt: Prompt): Promise<Node>;

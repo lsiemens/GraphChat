@@ -1,4 +1,4 @@
-import { Prompt, Node, type NodeID, type ModelName, fromNodeID, fromViewName } from "@/types"
+import { Prompt, Node, type NodeID, type ModelName, type ViewName, fromNodeID, fromViewName } from "@/types"
 import type { EngineAPI } from "./EngineAPI"
 import { apiToNode, apiFromPrompt, apiToNodeIDs, apiToModelNames, apiToViewNames, apiFromViewUpstream, apiToViewContext } from "./APITypes"
 
