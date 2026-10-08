@@ -1,31 +1,23 @@
 import { useState } from "react";
-import type { Prompt } from "@/client-driver/api/NodeData";
+import { Prompt } from  "@/types"
+import { useClientState } from "@/ui/hooks/useClientState"
 import styles from "./ChatInput.module.css"
 
-interface Props {
-  onSend: (prompt: Prompt) => Promise<void>;
-  disabled?: boolean;
-}
+export function ChatInput() {
+  const [clientState, reactClient] = useClientState();
+  const [isSending, setIsSending] = useState(false);
+  console.log("ChatInput");
+  let disabled = false || isSending;
+  const isEmpty = !clientState.prompt.content.trim();
 
-export function ChatInput({ onSend, disabled = false }: Props) {
-  const [text, setText] = useState("");
-
-  function handleSubmit() {
-    const trimmed = text.trim();
-
-    if (!trimmed) {
+  async function handleSubmit() {
+    if (isEmpty) {
       return;
     }
 
-    const prompt: Prompt = {
-      model: "model",
-      upstream: [],
-      timestamp: new Date().toISOString(),
-      content: trimmed,
-    };
-
-    onSend(prompt);
-    setText("");
+    setIsSending(true);
+    await reactClient.submitPrompt();
+    setIsSending(false);
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -35,13 +27,24 @@ export function ChatInput({ onSend, disabled = false }: Props) {
     }
   }
 
+  function onChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
+    const prompt = clientState.prompt;
+    const newPrompt = new Prompt({
+        model: prompt.model,
+        upstream: prompt.upstream,
+        context: prompt.context,
+        content: event.target.value,
+    });
+    reactClient.updatePrompt(newPrompt);
+  }
+
   // TODO add proper handling of disabled
   return (
     <div className={styles["input"]}>
       <div className={styles["textarea"]}>
         <textarea
-          value={text}
-          onChange={(event) => setText(event.target.value)}
+          value={clientState.prompt.content}
+          onChange={onChange}
           onKeyDown={handleKeyDown}
           placeholder="Ask anything"
           rows={3}
@@ -53,7 +56,7 @@ export function ChatInput({ onSend, disabled = false }: Props) {
         <button type="button" disabled={disabled}>
           Settings 
         </button>
-        <button type="button" onClick={handleSubmit} disabled={!text.trim()}>
+        <button type="button" onClick={handleSubmit} disabled={isEmpty || disabled}>
           Send
         </button>
       </div>

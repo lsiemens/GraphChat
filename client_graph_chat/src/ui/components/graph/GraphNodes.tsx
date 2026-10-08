@@ -1,47 +1,54 @@
-import { Position, Handle } from "@xyflow/react";
-import type { Node, NodeProps, XYPosition } from "@xyflow/react";
-import type { Prompt, NodeData } from "@/client-driver/api/NodeData";
-import styles from "./GraphNodes.module.css";
+import { Position, Handle } from "@xyflow/react"
+import { useClientState } from "@/ui/hooks/useClientState"
+import type { Node, NodeProps, XYPosition } from "@xyflow/react"
+import { type NodeID, fromNodeID , nodeIDToString } from "@/types"
+import styles from "./GraphNodes.module.css"
 
-type PromptNode = Node<{ prompt: Prompt }, "promptNode">;
-type FullNode = Node<{ nodeData: NodeData }, "fullNode">;
+type PromptNode = Node<{}, "promptNode">;
+type FullNode = Node<{ nodeID: NodeID }, "fullNode">;
+export type GraphNode = FullNode | PromptNode;
 
-export function createFullNode(position: XYPosition, nodeData: NodeData): FullNode {
+export function createPromptNode(position: XYPosition): PromptNode {
   return {
-    id:nodeData.id,
-    type:"fullNode",
+    id: "Prompt",
+    type: "promptNode",
     position: position,
     deletable: false,
-    data: { nodeData: nodeData },
+    data: {},
   };
 }
 
-export function createPromptNode(position: XYPosition, prompt: Prompt): PromptNode {
+export function createFullNode(position: XYPosition, nodeID: NodeID): FullNode {
   return {
-    id:"Prompt",
-    type:"promptNode",
+    id: nodeID,
+    type: "fullNode",
     position: position,
     deletable: false,
-    data: { prompt: prompt },
+    data: { nodeID: nodeID },
   };
 }
 
-export function PromptNode({ data }: NodeProps<PromptNode>) {
+export function promptNodeView({ data }: NodeProps<PromptNode>) {
+  const [clientState, ] = useClientState();
+  const prompt = clientState.prompt;
   return(
     <div className={styles["node"]}>
-      <div>Prompt: {data.prompt.content.slice(0, 3)}</div>
+      <div>Prompt: {prompt.content.slice(0, 3)}</div>
       <Handle type="target" position={Position.Top} />
     </div>
   );
 }
 
-export function FullNode({ data }: NodeProps<FullNode>) {
+export function fullNodeView({ data }: NodeProps<FullNode>) {
+  const [, reactClient] = useClientState();
+  const node = reactClient.getNodeByID(data.nodeID);
+  const hasUpstream = (node.upstream.length !== 0);
+
   return(
     <div className={styles["node"]}>
-      <div>ID: {data.nodeData.id.slice(0, 3)}</div>
+      <div>ID: {nodeIDToString(data.nodeID)}</div>
       <Handle type="source" position={Position.Bottom} />
-      <Handle type="target" isConnectable={false} position={Position.Top} />
+      { hasUpstream && (<Handle type="target" isConnectable={false} position={Position.Top} />) }
     </div>
   );
 }
-

@@ -1,6 +1,6 @@
 import { toModelName } from "./types"
 import { HTTPEngineAPI } from "./client-driver/api/HTTPEngineAPI"
-import { useClientDriver } from "./ui/hooks/useClientDriver"
+import { ReactClientContext } from "./ui/context/ReactClientContext"
 
 import { SplitView } from "./ui/components/layout/SplitView"
 import { Chat } from "./ui/components/chat/Chat"
@@ -10,11 +10,9 @@ import "./ClientGraphChat.css"
 function ClientGraphChat() {
   const model = toModelName("Grok-4.20");
   const api = new HTTPEngineAPI({host:"http://localhost", port:"8000", apiBase:"/api/v1"});
-  const driver = useClientDriver(api, model);
-  console.log("useDriver.models: " + driver.models);
 
   return (
-    <>
+    <ReactClientContext api={api} model={model}>
       <h1>GraphChat</h1>
       <section id="hbreak"></section>
 
@@ -25,7 +23,7 @@ function ClientGraphChat() {
 
       <section id="hbreak"></section>
       Footer
-    </>
+    </ReactClientContext>
   )
 }
 

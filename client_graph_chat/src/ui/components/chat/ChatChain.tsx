@@ -1,16 +1,15 @@
-import type { NodeData } from "@/client-driver/api/NodeData";
-import { ChatNode } from "./ChatNode";
+import { useClientState } from "@/ui/hooks/useClientState"
+import { ChatNode } from "./ChatNode"
 import styles from "./ChatChain.module.css"
 
-interface Props {
-  nodes: NodeData[];
-};
+export function ChatChain() {
+  const [clientState] = useClientState();
 
-export function ChatChain({ nodes }: Props) {
+  const context = clientState.prompt.context;
   return (
     <div className={styles["nodes"]}>
-      {nodes.map((node) => (
-        <ChatNode key={node.id} node={node} />
+      {context.map((nodeID) => (
+        <ChatNode key={nodeID} nodeID={nodeID} />
       ))}
     </div>
   );

@@ -37,26 +37,15 @@ export class ClientDriver {
 
       this.nodes.set(nodeID, node);
     }
+  }
 
-    /*
-    console.log("------ClientDriver Initialized---------");
+  async submitPrompt(): Promise<void> {
+    const node = await this.api.sendPrompt(this.prompt);
+    this.nodes.set(node.id, node);
+    this.prompt = new Prompt({model: node.model, upstream:[node.id], context:[...node.context, node.id], content:""});
+  }
 
-    console.log("Models: " + this.models);
-    console.log("Views: " + this.views);
-    if (nodeIDs.length === 0) {
-      console.log("NodeIDs: []")
-    } else {
-      console.log("NodeIDs: " + nodeIDs);
-    }
-    for (const nodeID of nodeIDs) {
-      console.log("  Node: " + this.nodes.get(nodeID)!);
-    }
-
-    const prompt = new Prompt({model:this.models[0]!, upstream:[], context:[], content:"This is a prompt"});
-    console.log(prompt);
-    const node = await this.api.sendPrompt(prompt);
-    const contexts = await this.api.computeView(this.views[0]!, [node.id]);
-    console.log(node);
-    */
+  async computeView(viewName: viewName, upstream: NodeID[]): Promise<NodeID[]> {
+    return await this.api.computeView(viewName, upstream);
   }
 }

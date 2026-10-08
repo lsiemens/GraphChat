@@ -1,4 +1,4 @@
-import { type NodeID, NodeIDToString } from "./NodeID"
+import { type NodeID, nodeIDToString } from "./NodeID"
 import type { ModelName } from "./ModelName"
 
 interface NodeArgs {
@@ -31,6 +31,6 @@ export class Node {
   }
 
   public toString(): string {
-    return `Node(id=${NodeIDToString(this.id)}, context.length=${this.context.length}, reply="${this.reply}")`;
+    return `Node(id=${nodeIDToString(this.id)}, context.length=${this.context.length}, reply="${this.reply}")`;
   }
 }

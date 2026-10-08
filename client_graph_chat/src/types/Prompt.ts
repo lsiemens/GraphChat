@@ -9,10 +9,10 @@ interface PromptArgs {
 }
 
 export class Prompt {
-  public model: ModelName;
-  public upstream: NodeID[];
-  public context: NodeID[];
-  public content: string;
+  readonly model: ModelName;
+  readonly upstream: readonly NodeID[];
+  readonly context: readonly NodeID[];
+  readonly content: string;
 
   constructor(args: PromptArgs) {
     this.model = args.model;

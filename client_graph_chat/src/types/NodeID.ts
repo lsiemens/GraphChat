@@ -33,6 +33,6 @@ export function fromNodeIDs(nodeIDs: NodeID[]): string[] {
   });
 }
 
-export function NodeIDToString(nodeID: NodeID): string {
+export function nodeIDToString(nodeID: NodeID): string {
   return `NodeID(${nodeID.slice(0, FINGERPRINT_LENGTH)})`;
 }

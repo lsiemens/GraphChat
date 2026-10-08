@@ -1,27 +1,96 @@
-import { useState, useCallback } from "react";
-import { ReactFlow, Background, MiniMap, applyEdgeChanges, applyNodeChanges, addEdge } from "@xyflow/react";
-import type { Node, Edge, OnNodesChange, OnEdgesChange, OnConnect } from "@xyflow/react";
-import { PromptNode, createPromptNode, FullNode, createFullNode } from "./GraphNodes"
+import { useState, useCallback, useEffect } from "react";
+import type { NodeID } from "@/types"
+import { ReactFlow, Background, MiniMap, useNodesState, useEdgesState, applyEdgeChanges } from "@xyflow/react";
+import type { Node, Edge, OnConnect, OnEdgesChange } from "@xyflow/react"
+import { type ClientState, ReactClient } from "@/client-driver/ReactClient"
+import { useClientState } from "@/ui/hooks/useClientState"
+import { createPromptNode, createFullNode, promptNodeView, fullNodeView, type GraphNode } from "./GraphNodes"
 import "@xyflow/react/dist/style.css";
 import styles from "./Graph.module.css"
 
-const initialNodes: Node[] = [
-  createFullNode({x:0, y:0}, {id: "A", upstream: [], request: "request", reply: "reply", model: "Grok-4.20", costUSD: null}),
-  createFullNode({x:-100, y:100}, {id: "C", upstream: [], request: "request", reply: "reply", model: "Grok-4.20", costUSD: null}),
-  createFullNode({x:-100, y:200}, {id: "D", upstream: [], request: "request", reply: "reply", model: "Grok-4.30", costUSD: null}),
-  createPromptNode({x:100, y:100}, {model: "Grok", upstream: [], timestamp: "", content: "This prompt"}),
-];
-const initialEdges: Edge[] = [{id: "C-D", deletable: false, source: "C", target: "D"}];
- 
+function createEdge(sourceID: NodeID, targetID: NodeID, deletable: boolean): Edge {
+  return {
+    id: `${sourceID} -> ${targetID}`,
+    source: sourceID,
+    target: targetID,
+    deletable: deletable,
+  };
+}
+
+function reconcileNodes(current: GraphNode[], nodeIDs: ReadonlySet<NodeID>): GraphNode[] {
+  const next = current.filter(node => (node.type === "promptNode") || nodeIDs.has(node.id as NodeID));
+
+  const filteredIDs = new Set(next.map(node => node.id as NodeID));
+  for (const nodeID of nodeIDs) {
+    if (!filteredIDs.has(nodeID)) {
+      next.push(createFullNode({x:Math.random()*500, y:Math.random()*500}, nodeID));
+    }
+  }
+  return next;
+}
+
+function reconcileEdges(current: Edge[], nodeIDs: ReadonlySet<NodeID>, clientState: ClientState, reactClient: ReactClient): Edge[] {
+  const next: Edge[] = [];
+
+  for (const targetID of nodeIDs) {
+    const targetNode = reactClient.getNodeByID(targetID);
+    for (const sourceID of targetNode.upstream) {
+      next.push(createEdge(sourceID, targetID, false));
+    }
+  }
+
+  for (const sourceID of clientState.prompt.upstream) {
+    next.push(createEdge(sourceID, "Prompt", true));
+  }
+  return next;
+}
+
 export function Graph() {
-  const [nodes, setNodes] = useState<Node[]>(initialNodes);
-  const [edges, setEdges] = useState<Edge[]>(initialEdges);
+  const [clientState, reactClient] = useClientState();
 
-  const onNodesChange: OnNodesChange = useCallback((changes) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)), []);
-  const onEdgesChange: OnEdgesChange = useCallback((changes) => setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)), []);
-  const onConnect: OnConnect = useCallback((params) => setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot)), []);
+  const [nodes, setNodes, onNodesChange] = useNodesState<GraphNode>([createPromptNode({x:0, y:0})]);
+  const [edges, setEdges] = useEdgesState([]);
 
-  const nodeTypes = { promptNode: PromptNode, fullNode: FullNode };
+  const nodeIDs = clientState.nodeIDs;
+
+  useEffect(() => {
+    setNodes(current => reconcileNodes(current, nodeIDs));
+    setEdges(current => reconcileEdges(current, nodeIDs, clientState, reactClient));
+    }, [nodeIDs, clientState, reactClient, setNodes, setEdges]);
+
+  const onConnect: OnConnect = useCallback(async (connection) => {
+    if (connection.source == null || connection.target !== "Prompt") {
+      return;
+    }
+
+    const sourceID = connection.source as NodeID;
+    const prompt = clientState.prompt;
+    if (prompt.upstream.includes(sourceID)) {
+      return;
+    }
+
+    const newUpstream = [...prompt.upstream, sourceID];
+    await reactClient.updatePromptUpstream(newUpstream);
+  }, [clientState, reactClient]);
+
+  const onEdgesChange: OnEdgesChange = useCallback(async (changes) => {
+    for (const change of changes) {
+      if (change.type === "remove") {
+        const edge = edges.find(edge => edge.id === change.id);
+
+        const sourceID = edge.source as NodeID;
+        const prompt = clientState.prompt;
+
+        const newUpstream = prompt.upstream.filter(nodeID => nodeID !== sourceID);
+        await reactClient.updatePromptUpstream(newUpstream);
+      }
+    }
+
+    setEdges(current => applyEdgeChanges(changes, current));
+  }, [edges, setEdges, clientState, reactClient]);
+
+
+  const nodeTypes = { promptNode: promptNodeView, fullNode: fullNodeView };
 
   return (
     <div className={styles["graph"]}>

@@ -1,11 +1,16 @@
-import type { NodeData } from "@/client-driver/api/NodeData";
+import type { NodeID } from "@/types"
+import { useClientState } from "@/ui/hooks/useClientState"
 import styles from "./ChatNode.module.css"
 
 interface Props {
-  node: NodeData;
+  nodeID: NodeID;
 };
 
-export function ChatNode({ node }: Props) {
+export function ChatNode({ nodeID }: Props) {
+  const [clientState, reactClient] = useClientState();
+
+  const node = reactClient.getNodeByID(nodeID);
+
   return (
     <div className={styles["node"]}>
       <div className={styles["request"]}>
