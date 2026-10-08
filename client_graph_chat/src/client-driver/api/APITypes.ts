@@ -1,23 +1,26 @@
 import { Prompt, Node } from "@/types"
 import { type NodeID, toNodeID, toNodeIDs, fromNodeIDs } from "@/types"
 import { type ModelName, toModelName, toModelNames, fromModelName } from "@/types"
+import { type ViewName, toViewName, toViewNames, fromViewName } from "@/types"
 
 /* API Interfaces */
-
-interface NodeAPI {
-  id: string;
-  upstream: string[];
-  request: string;
-  reply: string;
-  model: string;
-  costUSD: number | null;
-}
 
 interface PromptAPI {
   model: string;
   upstream: string[];
+  context: string[];
   timestamp: string;
   content: string;
+}
+
+interface NodeAPI {
+  id: string;
+  upstream: string[];
+  context: string[];
+  request: string;
+  reply: string;
+  model: string;
+  costUSD: number | null;
 }
 
 interface NodeIDsAPI {
@@ -28,75 +31,111 @@ interface ModelNamesAPI {
   models: string[];
 }
 
-/* Type Validation */
+interface ViewNamesAPI {
+  viewNames: string[];
+}
+
+interface ViewUpstreamAPI {
+  upstream: string[];
+}
+
+interface ViewContextAPI {
+  context: string[];
+}
+
+interface ErrorAPI {
+  type: string;
+  message: string;
+}
+
+
+/* Base Type Validation */
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((element) => typeof element === "string");
+function isNumber(value: unknown): value is number {
+  return typeof value === "number";
 }
 
+function isString(value: unknown): value is string {
+  return typeof value === "string";
+}
+
+function isArrayOf<T>(value: unknown, guard: (value: unknown) => value is T): value is T[] {
+  return Array.isArray(value) && value.every(guard);
+}
+
+function isNullable<T>(value: unknown, guard: (value: unknown) => value is T): value is T | null {
+  return guard(value) || (value == null);
+}
+
+function validate<T>(value: unknown, guard: (value: unknown) => value is T, name: string): T {
+  if (!guard(value)) {
+    throw new Error(`Input data did not match ${name}`);
+  }
+
+  return value;
+}
+
+/* Type Validation */
 function isNodeAPI(value: unknown): value is NodeAPI {
   if (!isRecord(value)) return false;
 
   return (
-    typeof value["id"] === "string" &&
-    isStringArray(value["upstream"]) &&
-    typeof value["request"] === "string" &&
-    typeof value["reply"] === "string" &&
-    typeof value["model"] === "string" &&
-    typeof value["costUSD"] === "number" || value["costUSD"] === null
+    isString(value["id"]) &&
+    isArrayOf(value["upstream"], isString) &&
+    isArrayOf(value["context"], isString) &&
+    isString(value["request"]) &&
+    isString(value["reply"]) &&
+    isString(value["model"]) &&
+    isNullable(value["costUSD"], isNumber)
   );
 }
 
 function isNodeIDsAPI(value: unknown): value is NodeIDsAPI {
   if (!isRecord(value)) return false;
 
-  return isStringArray(value["ids"]);
+  return isArrayOf(value["ids"], isString);
 }
 
 function isModelNamesAPI(value: unknown): value is ModelNamesAPI {
   if (!isRecord(value)) return false;
 
-  return isStringArray(value["models"]);
+  return isArrayOf(value["models"], isString);
 }
 
-/* Internal Type Conversion */
+function isViewNamesAPI(value: unknown): value is ViewNamesAPI {
+  if (!isRecord(value)) return false;
 
-function toNodeAPI(input: unknown): NodeAPI {
-  if (!isNodeAPI(input)) {
-    throw new Error("Input data did match NodeAPI");
-  }
-
-  return input;
+  return isArrayOf(value["viewNames"], isString);
 }
 
-function toNodeIDsAPI(input: unknown): NodeIDsAPI {
-  if (!isNodeIDsAPI(input)) {
-    throw new Error("Input data did not match NodeIDsAPI");
-  }
+function isViewContextAPI(value: unknown): value is ViewContextAPI {
+  if (!isRecord(value)) return false;
 
-  return input;
+  return isArrayOf(value["context"], isString);
 }
 
-function toModelNamesAPI(input: unknown): ModelNamesAPI {
-  if (!isModelNamesAPI(input)) {
-    throw new Error("Input data did not match ModelNamesAPI");
-  }
+function isErrorAPI(value: unknown): value is ErrorAPI {
+  if (!isRecord(value)) return false;
 
-  return input;
+  return (
+    isString(value["type"]) &&
+    isString(value["message"])
+  );
 }
 
 /* Type Convsion */
 
 export function apiToNode(input: unknown): Node {
-  const nodeAPI = toNodeAPI(input);
+  const nodeAPI = validate(input, isNodeAPI, "NodeAPI");
 
   const data  = {
     id: toNodeID(nodeAPI.id),
     upstream: toNodeIDs(nodeAPI.upstream),
+    context: toNodeIDs(nodeAPI.context),
     request: nodeAPI.request,
     reply: nodeAPI.reply,
     model: toModelName(nodeAPI.model),
@@ -109,6 +148,7 @@ export function apiFromPrompt(prompt: Prompt): PromptAPI {
   const data = {
     model: fromModelName(prompt.model),
     upstream: fromNodeIDs(prompt.upstream),
+    context: fromNodeIDs(prompt.context),
     timestamp: new Date().toISOString(),
     content: prompt.content,
   };
@@ -117,13 +157,31 @@ export function apiFromPrompt(prompt: Prompt): PromptAPI {
 }
 
 export function apiToNodeIDs(input: unknown): NodeID[] {
-  const nodeIDsAPI = toNodeIDsAPI(input);
+  const nodeIDsAPI = validate(input, isNodeIDsAPI, "NodeIDsAPI");
 
   return toNodeIDs(nodeIDsAPI.ids);
 }
 
 export function apiToModelNames(input: unknown): ModelName[] {
-  const modelNamesAPI = toModelNamesAPI(input);
+  const modelNamesAPI = validate(input, isModelNamesAPI, "ModelNamesAPI");
 
   return toModelNames(modelNamesAPI.models);
+}
+
+export function apiToViewNames(input: unknown): ViewName[] {
+  const viewNamesAPI = validate(input, isViewNamesAPI, "ViewNamesAPI");
+
+  return toViewNames(viewNamesAPI.viewNames);
+}
+
+export function apiFromViewUpstream(viewUpstream: NodeID[]): ViewUpstreamAPI {
+  const data = { upstream: fromNodeIDs(viewUpstream) }
+
+  return data;
+}
+
+export function apiToViewContext(input: unknown): NodeID[] {
+  const viewContextAPI = validate(input, isViewContextAPI, "ViewContextAPI");
+
+  return toNodeIDs(viewContextAPI.context);
 }

@@ -1,3 +1,5 @@
+const FINGERPRINT_LENGTH = 10;
+
 export type NodeID = string & { readonly __brand: "NodeID" }
 
 export function toNodeID(input: string): NodeID {
@@ -29,4 +31,8 @@ export function fromNodeIDs(nodeIDs: NodeID[]): string[] {
   return nodeIDs.map((nodeID) => {
     return fromNodeID(nodeID);
   });
+}
+
+export function NodeIDToString(nodeID: NodeID): string {
+  return `NodeID(${nodeID.slice(0, FINGERPRINT_LENGTH)})`;
 }
