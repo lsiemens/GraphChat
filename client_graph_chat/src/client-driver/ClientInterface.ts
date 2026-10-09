@@ -1,3 +1,4 @@
+import { type Status, ClientError } from "@/types"
 import { Prompt, Node, type NodeID, type ModelName, type ViewName } from "@/types"
 import { ClientDriver } from "./ClientDriver"
 import type { EngineAPI } from "./api/EngineAPI"
@@ -10,6 +11,7 @@ export interface ClientState {
   readonly views: readonly ViewName[],
   readonly prompt: Prompt,
   readonly nodeIDs: ReadonlySet<NodeID>,
+  readonly status: Status,
 }
 
 export class ClientInterface {
@@ -19,8 +21,8 @@ export class ClientInterface {
   private clientStateSnapshot: ClientState | null = null;
   private clientStateListeners = new Set<Listener>();
 
-  constructor(api: EngineAPI, model: ModelName) {
-    this.clientDriver = new ClientDriver(api, model);
+  constructor(api: EngineAPI) {
+    this.clientDriver = new ClientDriver(api);
   }
 
   public updatePromptContent(content: string) {
@@ -40,10 +42,15 @@ export class ClientInterface {
 
     const viewName = clientState.views.at(0);
     if (viewName === undefined) {
-      throw new Error("Views is empty");
+      throw new ClientError("Views is empty", "");
     }
 
     const context = await this.clientDriver.computeView(viewName, upstream);
+
+    if (context === null) {
+      this.invalidateClientState();
+      return;
+    }
 
     const newPrompt = new Prompt({
       model: prompt.model,
@@ -73,7 +80,7 @@ export class ClientInterface {
     const node = this.clientDriver.nodes.get(nodeID);
 
     if (!node) {
-      throw new Error(`Node ${nodeID} does not exist in clientDriver`);
+      throw new ClientError("Node not found", `Node ${nodeID} does not exist in clientDriver`);
     }
 
     return node;
@@ -100,6 +107,7 @@ export class ClientInterface {
         views: this.clientDriver.views,
         prompt: this.clientDriver.prompt,
         nodeIDs: new Set(this.clientDriver.nodes.keys()),
+        status: this.clientDriver.status,
       };
     }
 

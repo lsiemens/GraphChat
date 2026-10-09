@@ -1,8 +1,8 @@
+import { ClientError } from "@/types"
 import { Prompt, Node } from "@/types"
 import { type NodeID, toNodeID, toNodeIDs, fromNodeIDs } from "@/types"
 import { type ModelName, toModelName, toModelNames, fromModelName } from "@/types"
 import { type ViewName, toViewNames } from "@/types"
-import { ServerError } from "@/types"
 
 /* API Interfaces */
 
@@ -74,7 +74,7 @@ function isNullable<T>(value: unknown, guard: (value: unknown) => value is T): v
 
 function validate<T>(value: unknown, guard: (value: unknown) => value is T, name: string): T {
   if (!guard(value)) {
-    throw new Error(`Input data did not match ${name}`);
+    throw new ClientError("JSON validation failed", `Input data did not match ${name}`);
   }
 
   return value;
@@ -146,6 +146,9 @@ export function apiToNode(input: unknown): Node {
 }
 
 export function apiFromPrompt(prompt: Prompt): PromptAPI {
+  if (prompt.model === null) {
+    throw new ClientError("Prompt serialization failed", "API conversion failed, prompt model can not be null.");
+  }
   const data = {
     model: fromModelName(prompt.model),
     upstream: fromNodeIDs(prompt.upstream),
@@ -187,8 +190,8 @@ export function apiToViewContext(input: unknown): NodeID[] {
   return toNodeIDs(viewContextAPI.context);
 }
 
-export function apiToServerError(input: unknown): ServerError {
+export function apiToClientError(input: unknown): ClientError {
   const errorAPI = validate(input, isErrorAPI, "ErrorAPI");
 
-  return new ServerError(errorAPI.type, errorAPI.message);
+  return new ClientError(`Server Error: ${errorAPI.type}`, errorAPI.message);
 }

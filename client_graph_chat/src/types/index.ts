@@ -3,4 +3,5 @@ export * from "./ModelName"
 export * from "./Prompt"
 export * from "./Node"
 export * from "./ViewName"
-export * from "./ServerError"
+
+export * from "./ClientError"

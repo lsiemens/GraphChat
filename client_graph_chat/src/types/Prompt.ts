@@ -2,14 +2,14 @@ import type { NodeID } from "./NodeID"
 import type { ModelName } from "./ModelName"
 
 interface PromptArgs {
-  readonly model: ModelName,
+  readonly model: ModelName | null,
   readonly upstream: readonly NodeID[],
   readonly context: readonly NodeID[],
   readonly content: string,
 }
 
 export class Prompt {
-  readonly model: ModelName;
+  readonly model: ModelName | null;
   readonly upstream: readonly NodeID[];
   readonly context: readonly NodeID[];
   readonly content: string;

@@ -6,8 +6,7 @@ import styles from "./ChatInput.module.css"
 export function ChatInput() {
   const { state, client } = useClient();
   const [isSending, setIsSending] = useState(false);
-  console.log("ChatInput");
-  let disabled = false || isSending;
+  let disabled = isSending;
   const isEmpty = !state.prompt.content.trim();
 
   async function handleSubmit() {
@@ -38,7 +37,6 @@ export function ChatInput() {
     client.updatePrompt(newPrompt);
   }
 
-  // TODO add proper handling of disabled
   return (
     <div className={styles["input"]}>
       <div className={styles["textarea"]}>

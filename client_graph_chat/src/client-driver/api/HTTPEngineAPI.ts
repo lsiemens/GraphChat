@@ -1,6 +1,7 @@
+import { ClientError } from "@/types"
 import { Prompt, Node, type NodeID, type ModelName, type ViewName, fromNodeID, fromViewName } from "@/types"
 import type { EngineAPI } from "./EngineAPI"
-import { apiToNode, apiFromPrompt, apiToNodeIDs, apiToModelNames, apiToViewNames, apiFromViewUpstream, apiToViewContext, apiToServerError } from "./APITypes"
+import { apiToNode, apiFromPrompt, apiToNodeIDs, apiToModelNames, apiToViewNames, apiFromViewUpstream, apiToViewContext, apiToClientError } from "./APITypes"
 
 interface HTTPEngineAPIArgs {
   host: string,
@@ -14,10 +15,10 @@ export class HTTPEngineAPI implements EngineAPI {
   constructor(args: HTTPEngineAPIArgs) {
     const portPattern = /^[1-9]\d{0,4}$/;
     if (!portPattern.test(args.port)) {
-      throw new Error(`Invalid port \"${args.port}\", it must be a positive integer`);
+      throw new ClientError("API initialization failed", `Invalid port \"${args.port}\", it must be a positive integer`);
     }
     if (Number(args.port) > 65535) {
-      throw new Error(`Invalid port \"${args.port}\", the maximum port number is 65535`);
+      throw new ClientError("API Initialization failed", `Invalid port \"${args.port}\", the maximum port number is 65535`);
     }
     this.API_URL = `${args.host}:${args.port}${args.apiBase}`;
   }
@@ -89,20 +90,19 @@ async function sendHTTPRequest<T>(URL: string, request: RequestInit, parser: (in
     let serverError;
     try {
       const raw_error: unknown = await reply.json();
-      serverError = apiToServerError(raw_error);
-    } catch (err) {
-      console.warn("Failed to parse the error message from the GraphChat engine");
-      throw new Error(`HTTP request sent to GraphChat failed. ${reply.status}: ${reply.statusText}`);
+      serverError = apiToClientError(raw_error);
+    } catch (error) {
+      console.warn(`Failed to parse the error message from the GraphChat engine: ${error}`);
+      throw new ClientError("Server request failed", `HTTP request sent to GraphChat failed. ${reply.status}: ${reply.statusText}`);
     }
 
     throw serverError;
   }
 
-
   try {
     const raw: unknown = await reply.json();
     return parser(raw);
-  } catch (err) {
-    throw new Error("Failed to parse the HTTP reply from the GraphChat engine", {cause: err});
+  } catch (error) {
+    throw new ClientError("Server request failed", `Failed to parse the HTTP reply from the GraphChat engine: ${error}`);
   }
 }

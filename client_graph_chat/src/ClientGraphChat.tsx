@@ -1,4 +1,3 @@
-import { toModelName } from "./types"
 import { HTTPEngineAPI } from "./client-driver/api/HTTPEngineAPI"
 import { ClientInterfaceContext } from "./ui/context/ClientInterfaceContext"
 
@@ -8,11 +7,10 @@ import { Graph } from "./ui/components/graph/Graph"
 import "./ClientGraphChat.css"
 
 function ClientGraphChat() {
-  const model = toModelName("Grok-4.20");
   const api = new HTTPEngineAPI({host:"http://localhost", port:"8000", apiBase:"/api/v1"});
 
   return (
-    <ClientInterfaceContext api={api} model={model}>
+    <ClientInterfaceContext api={api}>
       <h1>GraphChat</h1>
       <section id="hbreak"></section>
 
