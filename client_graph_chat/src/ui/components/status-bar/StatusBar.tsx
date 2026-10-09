@@ -22,8 +22,8 @@ export function StatusBar() {
     <div className={styles["status-bar"]}>
       <span>{summary}</span>
       <div className={styles["status-tooltip"]}>
-        {state.status.map((status) => (
-          <StatusMessage status={status} />
+        {state.status.map((status, index) => (
+          <StatusMessage key={index} status={status} />
         ))}
       </div>
     </div>

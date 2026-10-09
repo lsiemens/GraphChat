@@ -53,7 +53,6 @@ export class ClientDriver {
       }
     }
 
-
     try {
       this.views = await this.api.getViews();
     } catch (error) {

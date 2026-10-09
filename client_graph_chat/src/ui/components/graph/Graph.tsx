@@ -1,12 +1,12 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect } from "react"
 import { PROMPT_ID, NODE_TYPES, type GraphNode } from "./GraphNode"
 import { type NodeID, fromNodeID, toNodeID } from "@/types"
-import { ReactFlow, Background, MiniMap, useNodesState, useEdgesState, applyEdgeChanges } from "@xyflow/react";
+import { ReactFlow, Background, MiniMap, useNodesState, useEdgesState, applyEdgeChanges } from "@xyflow/react"
 import type { Edge, OnConnect, OnEdgesChange } from "@xyflow/react"
 import { type ClientState, ClientInterface } from "@/client-driver/ClientInterface"
 import { useClient } from "@/ui/hooks/useClient"
 import { createPromptNode, createDataNode } from "./GraphNode"
-import "@xyflow/react/dist/style.css";
+import "@xyflow/react/dist/style.css"
 import styles from "./Graph.module.css"
 
 function createEdge(sourceID: string, targetID: string, deletable: boolean): Edge {
@@ -57,7 +57,7 @@ export function Graph() {
   useEffect(() => {
     setNodes(current => reconcileNodes(current, nodeIDs));
     setEdges(() => reconcileEdges(nodeIDs, state, client));
-    }, [nodeIDs, state, client, setNodes, setEdges]);
+  }, [nodeIDs, state, client, setNodes, setEdges]);
 
   const onConnect: OnConnect = useCallback(async (connection) => {
     if (connection.source == null || connection.target !== PROMPT_ID) {
@@ -93,7 +93,6 @@ export function Graph() {
 
     setEdges(current => applyEdgeChanges(changes, current));
   }, [edges, setEdges, state, client]);
-
 
 
   return (

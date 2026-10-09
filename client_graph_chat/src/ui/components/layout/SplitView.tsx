@@ -1,5 +1,5 @@
-import { Group, Panel, Separator } from "react-resizable-panels";
-import styles from "./SplitView.module.css";
+import { Group, Panel, Separator } from "react-resizable-panels"
+import styles from "./SplitView.module.css"
 
 type Props = {
   left: React.ReactNode;
@@ -17,5 +17,5 @@ export function SplitView({ left, right }: Props) {
         {right}
       </Panel>
     </Group>
-  )
+  );
 }

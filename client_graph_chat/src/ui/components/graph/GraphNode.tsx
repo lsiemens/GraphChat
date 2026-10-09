@@ -11,8 +11,8 @@ type DataNode = Node<{ nodeID: NodeID }, "DataNode">;
 export type GraphNode = PromptNode | DataNode;
 
 export const NODE_TYPES = {
-    PromptNode: promptNodeView,
-    DataNode: dataNodeView
+    PromptNode: PromptNodeView,
+    DataNode: DataNodeView,
 } satisfies NodeTypes;
 
 export function createPromptNode(position: XYPosition): PromptNode {
@@ -35,7 +35,7 @@ export function createDataNode(position: XYPosition, nodeID: NodeID): DataNode {
   };
 }
 
-function promptNodeView({ }: NodeProps<PromptNode>) {
+function PromptNodeView({ }: NodeProps<PromptNode>) {
   const { state } = useClient();
   const prompt = state.prompt;
   return(
@@ -46,7 +46,7 @@ function promptNodeView({ }: NodeProps<PromptNode>) {
   );
 }
 
-function dataNodeView({ data }: NodeProps<DataNode>) {
+function DataNodeView({ data }: NodeProps<DataNode>) {
   const { client } = useClient();
   const node = client.getNodeByID(data.nodeID);
   const hasUpstream = (node.upstream.length !== 0);

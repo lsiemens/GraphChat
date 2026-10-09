@@ -25,7 +25,7 @@ export class ClientInterface {
     this.clientDriver = new ClientDriver(api);
   }
 
-  public updatePromptContent(content: string) {
+  public updatePromptContent(content: string): void {
     const prompt = this.getClientStateSnapshot().prompt;
     const newPrompt = new Prompt({
       model: prompt.model,
@@ -36,7 +36,7 @@ export class ClientInterface {
     this.updatePrompt(newPrompt);
   }
 
-  async updatePromptUpstream(upstream: NodeID[]) {
+  async updatePromptUpstream(upstream: NodeID[]): Promise<void> {
     const clientState = this.getClientStateSnapshot();
     const prompt = clientState.prompt;
 
@@ -61,7 +61,7 @@ export class ClientInterface {
     this.updatePrompt(newPrompt);
   }
 
-  public updatePrompt(prompt: Prompt) {
+  public updatePrompt(prompt: Prompt): void {
     this.clientDriver.prompt = prompt;
     this.invalidateClientState();
   }
@@ -86,9 +86,15 @@ export class ClientInterface {
     return node;
   }
 
-  public invalidateClientState() {
+  public invalidateClientState(): void {
     this.clientStateSnapshot = null;
     this.notifyClientState();
+  }
+
+  private notifyClientState(): void {
+    for (const listener of this.clientStateListeners) {
+      listener();
+    }
   }
 
   /* useSyncExternalStore ClientState */
@@ -113,10 +119,4 @@ export class ClientInterface {
 
     return this.clientStateSnapshot;
   };
-
-  private notifyClientState(): void {
-    for (const listener of this.clientStateListeners) {
-      listener();
-    }
-  }
 }

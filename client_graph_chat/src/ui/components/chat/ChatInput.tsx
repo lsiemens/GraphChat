@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef } from "react"
 import { Prompt } from  "@/types"
 import { useClient } from "@/ui/hooks/useClient"
 import styles from "./ChatInput.module.css"
@@ -25,14 +25,14 @@ export function ChatInput() {
     }, 0);
   }
 
-  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>): void {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       handleSubmit();
     }
   }
 
-  function onChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
+  function onChange(event: React.ChangeEvent<HTMLTextAreaElement>): void {
     const prompt = state.prompt;
     const newPrompt = new Prompt({
         model: prompt.model,
