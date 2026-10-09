@@ -2,6 +2,7 @@ import { Prompt, Node } from "@/types"
 import { type NodeID, toNodeID, toNodeIDs, fromNodeIDs } from "@/types"
 import { type ModelName, toModelName, toModelNames, fromModelName } from "@/types"
 import { type ViewName, toViewNames } from "@/types"
+import { ServerError } from "@/types"
 
 /* API Interfaces */
 
@@ -174,7 +175,7 @@ export function apiToViewNames(input: unknown): ViewName[] {
   return toViewNames(viewNamesAPI.viewNames);
 }
 
-export function apiFromViewUpstream(viewUpstream: NodeID[]): ViewUpstreamAPI {
+export function apiFromViewUpstream(viewUpstream: readonly NodeID[]): ViewUpstreamAPI {
   const data = { upstream: fromNodeIDs(viewUpstream) }
 
   return data;
@@ -184,4 +185,10 @@ export function apiToViewContext(input: unknown): NodeID[] {
   const viewContextAPI = validate(input, isViewContextAPI, "ViewContextAPI");
 
   return toNodeIDs(viewContextAPI.context);
+}
+
+export function apiToServerError(input: unknown): ServerError {
+  const errorAPI = validate(input, isErrorAPI, "ErrorAPI");
+
+  return new ServerError(errorAPI.type, errorAPI.message);
 }

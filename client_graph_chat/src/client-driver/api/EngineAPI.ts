@@ -6,7 +6,7 @@ export interface EngineAPI {
   getNode(nodeID: NodeID): Promise<Node>;
 
   getViews(): Promise<ViewName[]>;
-  computeView(viewName: ViewName, upstream: NodeID[]): Promise<NodeID[]>;
+  computeView(viewName: ViewName, upstream: readonly NodeID[]): Promise<NodeID[]>;
 
   getModels(): Promise<ModelName[]>;
 }
