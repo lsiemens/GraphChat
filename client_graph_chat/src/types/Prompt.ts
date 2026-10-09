@@ -2,10 +2,10 @@ import type { NodeID } from "./NodeID"
 import type { ModelName } from "./ModelName"
 
 interface PromptArgs {
-  model: ModelName,
-  upstream: NodeID[],
-  context: NodeID[],
-  content: string,
+  readonly model: ModelName,
+  readonly upstream: readonly NodeID[],
+  readonly context: readonly NodeID[],
+  readonly content: string,
 }
 
 export class Prompt {

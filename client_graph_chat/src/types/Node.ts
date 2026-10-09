@@ -1,14 +1,14 @@
-import { type NodeID, nodeIDToString } from "./NodeID"
+import { type NodeID, nodeIDFingerprint } from "./NodeID"
 import type { ModelName } from "./ModelName"
 
 interface NodeArgs {
-  id: NodeID,
-  upstream: NodeID[],
-  context: NodeID[],
-  request: string,
-  reply: string,
-  model: ModelName,
-  costUSD: number | null,
+  readonly id: NodeID,
+  readonly upstream: readonly NodeID[],
+  readonly context: readonly NodeID[],
+  readonly request: string,
+  readonly reply: string,
+  readonly model: ModelName,
+  readonly costUSD: number | null,
 }
 
 export class Node {
@@ -31,6 +31,6 @@ export class Node {
   }
 
   public toString(): string {
-    return `Node(id=${nodeIDToString(this.id)}, context.length=${this.context.length}, reply="${this.reply}")`;
+    return `Node(id=${nodeIDFingerprint(this.id)}, context.length=${this.context.length}, reply="${this.reply}")`;
   }
 }

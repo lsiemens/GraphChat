@@ -7,7 +7,7 @@ interface Props {
 };
 
 export function ChatNode({ nodeID }: Props) {
-  const [clientState, reactClient] = useClientState();
+  const [, reactClient] = useClientState();
 
   const node = reactClient.getNodeByID(nodeID);
 

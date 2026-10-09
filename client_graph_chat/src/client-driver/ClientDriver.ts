@@ -45,7 +45,7 @@ export class ClientDriver {
     this.prompt = new Prompt({model: node.model, upstream:[node.id], context:[...node.context, node.id], content:""});
   }
 
-  async computeView(viewName: viewName, upstream: NodeID[]): Promise<NodeID[]> {
+  async computeView(viewName: ViewName, upstream: NodeID[]): Promise<NodeID[]> {
     return await this.api.computeView(viewName, upstream);
   }
 }

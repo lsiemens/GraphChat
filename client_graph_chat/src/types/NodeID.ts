@@ -27,12 +27,12 @@ export function toNodeIDs(inputs: readonly string[]): NodeID[] {
   });
 }
 
-export function fromNodeIDs(nodeIDs: NodeID[]): string[] {
+export function fromNodeIDs(nodeIDs: readonly NodeID[]): string[] {
   return nodeIDs.map((nodeID) => {
     return fromNodeID(nodeID);
   });
 }
 
-export function nodeIDToString(nodeID: NodeID): string {
+export function nodeIDFingerprint(nodeID: NodeID): string {
   return `NodeID(${nodeID.slice(0, FINGERPRINT_LENGTH)})`;
 }
