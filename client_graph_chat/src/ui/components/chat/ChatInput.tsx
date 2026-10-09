@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Prompt } from  "@/types"
 import { useClient } from "@/ui/hooks/useClient"
 import styles from "./ChatInput.module.css"
@@ -6,6 +6,7 @@ import styles from "./ChatInput.module.css"
 export function ChatInput() {
   const { state, client } = useClient();
   const [isSending, setIsSending] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   let disabled = isSending;
   const isEmpty = !state.prompt.content.trim();
 
@@ -17,6 +18,11 @@ export function ChatInput() {
     setIsSending(true);
     await client.submitPrompt();
     setIsSending(false);
+
+    // use a timer to some setup in the browser before focus can be returned
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 0);
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -41,6 +47,7 @@ export function ChatInput() {
     <div className={styles["input"]}>
       <div className={styles["textarea"]}>
         <textarea
+          ref={textareaRef}
           value={state.prompt.content}
           onChange={onChange}
           onKeyDown={handleKeyDown}

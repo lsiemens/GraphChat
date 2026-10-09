@@ -1,0 +1,18 @@
+.status {
+  border-bottom: var(--border-size) solid var(--accent-border);
+  border-top: var(--border-size) solid var(--accent-border);
+  padding: var(--padding);
+}
+
+.message {
+  background: var(--accent-bg);
+  margin: var(--margin);
+  padding: var(--padding);
+  border: var(--border-size) solid var(--accent-border);
+}
+
+.details {
+  text-align: left;
+  margin: var(--margin);
+  padding: var(--padding);
+}

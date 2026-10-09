@@ -9,7 +9,7 @@ export class ClientDriver {
   public nodes: Map<NodeID, Node>;
   public models: ModelName[];
   public views: ViewName[];
-  public status: Status;
+  public status: readonly Status[];
 
   constructor(api: EngineAPI) {
     this.api = api;
@@ -18,10 +18,12 @@ export class ClientDriver {
     this.views = [];
     this.prompt = new Prompt({model: null, upstream:[], context:[], content:""});
     this.nodes = new Map<NodeID, Node>();
-    this.status = {
+    this.status = [];
+
+    this.pushStatus({
       message:"Uninitialized",
       details:"",
-    };
+    });
   }
 
   async initialize(): Promise<void> {
@@ -33,20 +35,20 @@ export class ClientDriver {
       failedInitialization = true;
       console.error("Model initialization failed:", error);
       if (error instanceof ClientError) {
-        this.status = error.status;
+        this.pushStatus(error.status);
       } else if (error instanceof Error) {
-        this.status = {
+        this.pushStatus({
           message: "Model initialization failed",
           details: `Exception: ${error}`,
-        };
+        });
       }
     } finally {
       if (this.models.length === 0) {
         failedInitialization = true;
-        this.status = {
+        this.pushStatus({
           message:"No models found",
           details:"",
-        };
+        });
         console.error("Failed to initialize ClientDriver: The models list is empty.")
       }
     }
@@ -58,20 +60,20 @@ export class ClientDriver {
       failedInitialization = true;
       console.error("View initialization failed:", error);
       if (error instanceof ClientError) {
-        this.status = error.status;
+        this.pushStatus(error.status);
       } else if (error instanceof Error) {
-        this.status = {
+        this.pushStatus({
           message: "View initialization failed",
           details: `Exception: ${error}`,
-        };
+        });
       }
     } finally {
       if (this.views.length === 0) {
         failedInitialization = true;
-        this.status = {
+        this.pushStatus({
           message:"No views found",
           details:"",
-        };
+        });
         console.error("Failed to initialize ClientDriver: The views list is empty.")
       }
     }
@@ -95,12 +97,12 @@ export class ClientDriver {
       failedInitialization = true;
       console.error("Graph initialization failed:", error);
       if (error instanceof ClientError) {
-        this.status = error.status;
+        this.pushStatus(error.status);
       } else if (error instanceof Error) {
-        this.status = {
+        this.pushStatus({
           message: "Failed to load graph",
           details: `Exception: ${error}`,
-        };
+        });
       }
     }
 
@@ -118,12 +120,12 @@ export class ClientDriver {
     } catch (error) {
       console.error("Failed to submit prompt:", error);
       if (error instanceof ClientError) {
-        this.status = error.status;
+        this.pushStatus(error.status);
       } else if (error instanceof Error) {
-        this.status = {
+        this.pushStatus({
           message: "Error: prompt",
           details: `Exception: ${error}`,
-        };
+        });
       }
     }
   }
@@ -136,21 +138,22 @@ export class ClientDriver {
     } catch (error) {
       console.error("Failed to compute view:", error);
       if (error instanceof ClientError) {
-        this.status = error.status;
+        this.pushStatus(error.status);
       } else if (error instanceof Error) {
-        this.status = {
+        this.pushStatus({
           message: "Error: view",
           details: `Exception: ${error}`,
-        };
+        });
       }
     }
     return null;
   }
 
-  private clearStatus() {
-    this.status = {
-      message:"",
-      details:"",
-    }
+  public pushStatus(status: Status): void {
+    this.status = [...this.status, status]
+  }
+
+  private clearStatus(): void {
+    this.status = [];
   }
 }

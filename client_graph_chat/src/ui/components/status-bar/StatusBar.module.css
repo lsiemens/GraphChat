@@ -1,0 +1,33 @@
+.status-bar {
+  position: relative;
+  text-align: center;
+  background: var(--accent-bg);
+  margin: var(--margin);
+  border: var(--border-size) solid var(--accent-border);
+}
+
+.status-tooltip {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  flex: 1;
+  min-height: 0;
+  max-height: 50vh;
+  overflow-y: auto;
+
+  bottom: 50%;
+  padding: var(--padding);
+  background: var(--bg);
+  border: var(--border-size) solid var(--border);
+
+  visibility: hidden;
+  opacity: 0;
+
+  overflow-wrap: anywhere;
+  z-index: 1000;
+}
+
+.status-bar:hover .status-tooltip {
+  visibility: visible;
+  opacity: 1;
+}

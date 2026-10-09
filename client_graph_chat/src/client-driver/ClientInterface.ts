@@ -11,7 +11,7 @@ export interface ClientState {
   readonly views: readonly ViewName[],
   readonly prompt: Prompt,
   readonly nodeIDs: ReadonlySet<NodeID>,
-  readonly status: Status,
+  readonly status: readonly Status[],
 }
 
 export class ClientInterface {
