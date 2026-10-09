@@ -1,5 +1,5 @@
 import type { NodeID } from "@/types"
-import { useClientState } from "@/ui/hooks/useClientState"
+import { useClient } from "@/ui/hooks/useClient"
 import styles from "./ChatNode.module.css"
 
 interface Props {
@@ -7,9 +7,9 @@ interface Props {
 };
 
 export function ChatNode({ nodeID }: Props) {
-  const [, reactClient] = useClientState();
+  const { client } = useClient();
 
-  const node = reactClient.getNodeByID(nodeID);
+  const node = client.getNodeByID(nodeID);
 
   return (
     <div className={styles["node"]}>

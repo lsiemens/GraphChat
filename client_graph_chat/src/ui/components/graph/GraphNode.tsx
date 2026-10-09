@@ -1,7 +1,7 @@
 import { Position, Handle } from "@xyflow/react"
 import type { Node, NodeProps, XYPosition, NodeTypes } from "@xyflow/react"
 import { type NodeID, fromNodeID , nodeIDFingerprint } from "@/types"
-import { useClientState } from "@/ui/hooks/useClientState"
+import { useClient } from "@/ui/hooks/useClient"
 import styles from "./GraphNode.module.css"
 
 export const PROMPT_ID = "PROMPT_ID";
@@ -36,8 +36,8 @@ export function createDataNode(position: XYPosition, nodeID: NodeID): DataNode {
 }
 
 function promptNodeView({ }: NodeProps<PromptNode>) {
-  const [clientState, ] = useClientState();
-  const prompt = clientState.prompt;
+  const { state } = useClient();
+  const prompt = state.prompt;
   return(
     <div className={styles["node"]}>
       <div>Prompt: {prompt.content.slice(0, 3)}</div>
@@ -47,8 +47,8 @@ function promptNodeView({ }: NodeProps<PromptNode>) {
 }
 
 function dataNodeView({ data }: NodeProps<DataNode>) {
-  const [, reactClient] = useClientState();
-  const node = reactClient.getNodeByID(data.nodeID);
+  const { client } = useClient();
+  const node = client.getNodeByID(data.nodeID);
   const hasUpstream = (node.upstream.length !== 0);
 
   return(

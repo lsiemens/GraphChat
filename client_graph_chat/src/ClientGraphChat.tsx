@@ -1,6 +1,6 @@
 import { toModelName } from "./types"
 import { HTTPEngineAPI } from "./client-driver/api/HTTPEngineAPI"
-import { ReactClientContext } from "./ui/context/ReactClientContext"
+import { ClientInterfaceContext } from "./ui/context/ClientInterfaceContext"
 
 import { SplitView } from "./ui/components/layout/SplitView"
 import { Chat } from "./ui/components/chat/Chat"
@@ -12,7 +12,7 @@ function ClientGraphChat() {
   const api = new HTTPEngineAPI({host:"http://localhost", port:"8000", apiBase:"/api/v1"});
 
   return (
-    <ReactClientContext api={api} model={model}>
+    <ClientInterfaceContext api={api} model={model}>
       <h1>GraphChat</h1>
       <section id="hbreak"></section>
 
@@ -23,7 +23,7 @@ function ClientGraphChat() {
 
       <section id="hbreak"></section>
       Footer
-    </ReactClientContext>
+    </ClientInterfaceContext>
   )
 }
 

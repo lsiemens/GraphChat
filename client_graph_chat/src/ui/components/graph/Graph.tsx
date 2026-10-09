@@ -3,8 +3,8 @@ import { PROMPT_ID, NODE_TYPES, type GraphNode } from "./GraphNode"
 import { type NodeID, fromNodeID, toNodeID } from "@/types"
 import { ReactFlow, Background, MiniMap, useNodesState, useEdgesState, applyEdgeChanges } from "@xyflow/react";
 import type { Edge, OnConnect, OnEdgesChange } from "@xyflow/react"
-import { type ClientState, ReactClient } from "@/client-driver/ReactClient"
-import { useClientState } from "@/ui/hooks/useClientState"
+import { type ClientState, ClientInterface } from "@/client-driver/ClientInterface"
+import { useClient } from "@/ui/hooks/useClient"
 import { createPromptNode, createDataNode } from "./GraphNode"
 import "@xyflow/react/dist/style.css";
 import styles from "./Graph.module.css"
@@ -30,34 +30,34 @@ function reconcileNodes(current: readonly GraphNode[], nodeIDs: ReadonlySet<Node
   return next;
 }
 
-function reconcileEdges(nodeIDs: ReadonlySet<NodeID>, clientState: ClientState, reactClient: ReactClient): Edge[] {
+function reconcileEdges(nodeIDs: ReadonlySet<NodeID>, state: ClientState, client: ClientInterface): Edge[] {
   const next: Edge[] = [];
 
   for (const targetID of nodeIDs) {
-    const targetNode = reactClient.getNodeByID(targetID);
+    const targetNode = client.getNodeByID(targetID);
     for (const sourceID of targetNode.upstream) {
       next.push(createEdge(fromNodeID(sourceID), fromNodeID(targetID), false));
     }
   }
 
-  for (const sourceID of clientState.prompt.upstream) {
+  for (const sourceID of state.prompt.upstream) {
     next.push(createEdge(fromNodeID(sourceID), PROMPT_ID, true));
   }
   return next;
 }
 
 export function Graph() {
-  const [clientState, reactClient] = useClientState();
+  const { state, client } = useClient();
 
   const [nodes, setNodes, onNodesChange] = useNodesState<GraphNode>([createPromptNode({x:0, y:0})]);
   const [edges, setEdges] = useEdgesState<Edge>([]);
 
-  const nodeIDs = clientState.nodeIDs;
+  const nodeIDs = state.nodeIDs;
 
   useEffect(() => {
     setNodes(current => reconcileNodes(current, nodeIDs));
-    setEdges(() => reconcileEdges(nodeIDs, clientState, reactClient));
-    }, [nodeIDs, clientState, reactClient, setNodes, setEdges]);
+    setEdges(() => reconcileEdges(nodeIDs, state, client));
+    }, [nodeIDs, state, client, setNodes, setEdges]);
 
   const onConnect: OnConnect = useCallback(async (connection) => {
     if (connection.source == null || connection.target !== PROMPT_ID) {
@@ -65,14 +65,14 @@ export function Graph() {
     }
 
     const sourceID = toNodeID(connection.source);
-    const prompt = clientState.prompt;
+    const prompt = state.prompt;
     if (prompt.upstream.includes(sourceID)) {
       return;
     }
 
     const newUpstream = [...prompt.upstream, sourceID];
-    await reactClient.updatePromptUpstream(newUpstream);
-  }, [clientState, reactClient]);
+    await client.updatePromptUpstream(newUpstream);
+  }, [state, client]);
 
   const onEdgesChange: OnEdgesChange = useCallback(async (changes) => {
     for (const change of changes) {
@@ -84,15 +84,15 @@ export function Graph() {
         }
 
         const sourceID = toNodeID(edge.source);
-        const prompt = clientState.prompt;
+        const prompt = state.prompt;
 
         const newUpstream = prompt.upstream.filter(nodeID => nodeID !== sourceID);
-        await reactClient.updatePromptUpstream(newUpstream);
+        await client.updatePromptUpstream(newUpstream);
       }
     }
 
     setEdges(current => applyEdgeChanges(changes, current));
-  }, [edges, setEdges, clientState, reactClient]);
+  }, [edges, setEdges, state, client]);
 
 
 

@@ -12,7 +12,7 @@ export interface ClientState {
   readonly nodeIDs: ReadonlySet<NodeID>,
 }
 
-export class ReactClient {
+export class ClientInterface {
   private clientDriver: ClientDriver;
 
   /* useSyncExternalStore ClientState */

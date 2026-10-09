@@ -1,11 +1,11 @@
-import { useClientState } from "@/ui/hooks/useClientState"
+import { useClient } from "@/ui/hooks/useClient"
 import { ChatNode } from "./ChatNode"
 import styles from "./ChatChain.module.css"
 
 export function ChatChain() {
-  const [clientState] = useClientState();
+  const { state } = useClient();
 
-  const context = clientState.prompt.context;
+  const context = state.prompt.context;
   return (
     <div className={styles["nodes"]}>
       {context.map((nodeID) => (

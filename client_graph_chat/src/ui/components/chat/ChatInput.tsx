@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Prompt } from  "@/types"
-import { useClientState } from "@/ui/hooks/useClientState"
+import { useClient } from "@/ui/hooks/useClient"
 import styles from "./ChatInput.module.css"
 
 export function ChatInput() {
-  const [clientState, reactClient] = useClientState();
+  const { state, client } = useClient();
   const [isSending, setIsSending] = useState(false);
   console.log("ChatInput");
   let disabled = false || isSending;
-  const isEmpty = !clientState.prompt.content.trim();
+  const isEmpty = !state.prompt.content.trim();
 
   async function handleSubmit() {
     if (isEmpty) {
@@ -16,7 +16,7 @@ export function ChatInput() {
     }
 
     setIsSending(true);
-    await reactClient.submitPrompt();
+    await client.submitPrompt();
     setIsSending(false);
   }
 
@@ -28,14 +28,14 @@ export function ChatInput() {
   }
 
   function onChange(event: React.ChangeEvent<HTMLTextAreaElement>) {
-    const prompt = clientState.prompt;
+    const prompt = state.prompt;
     const newPrompt = new Prompt({
         model: prompt.model,
         upstream: prompt.upstream,
         context: prompt.context,
         content: event.target.value,
     });
-    reactClient.updatePrompt(newPrompt);
+    client.updatePrompt(newPrompt);
   }
 
   // TODO add proper handling of disabled
@@ -43,7 +43,7 @@ export function ChatInput() {
     <div className={styles["input"]}>
       <div className={styles["textarea"]}>
         <textarea
-          value={clientState.prompt.content}
+          value={state.prompt.content}
           onChange={onChange}
           onKeyDown={handleKeyDown}
           placeholder="Ask anything"
