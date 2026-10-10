@@ -6,6 +6,7 @@ Using python keyring
 
 import logging
 import getpass
+import os
 
 import keyring
 
@@ -16,6 +17,9 @@ logger = logging.getLogger(__name__)
 _service = "com.lsiemens.graphchat.engine"
 _API_key_name = "API_key"
 
+
+def use_env_variable():
+    return os.getenv("ENGINE_GRAPHCHAT_SERVICE", "0").lower() in ["true", "yes", "on", "1"]
 
 def clear_API_key():
     logger.info("Clear API keys.")
@@ -33,20 +37,17 @@ def save_API_key(API_key):
         raise exceptions.StorageError("Keyring: failed to write API key.") from e
 
 
-def initialize_client(initializer):
-    """Initialize a client using your API key.
+def initialize_from_env(initializer):
+    API_key = os.getenv("XAI_API_KEY", None)
 
-    Parameters
-    ----------
-    initializer : function(string)
-        A function that initializes a client given the API key as a string.
+    if API_key is None:
+        logger.critical("The ENV variable `ENGINE_GRAPHCHAT_SERVICE` was enabled but the API key was not found in the expected variable `XAI_API_KEY`")
+        raise exceptions.NotFoundError("Failed to load the API key from the environment")
 
-    Returns
-    -------
-    Client
-        The Client initialized from `initializer` using the API key.
-    """
+    return initializer(API_key)
 
+
+def initialize_from_key(initializer):
     API_key = keyring.get_password(_service, _API_key_name)
 
     if API_key is None:
@@ -65,3 +66,23 @@ def initialize_client(initializer):
 
     logger.debug("Initialize client with API key from keyring")
     return initializer(API_key)
+
+
+def initialize_client(initializer):
+    """Initialize a client using your API key.
+
+    Parameters
+    ----------
+    initializer : function(string)
+        A function that initializes a client given the API key as a string.
+
+    Returns
+    -------
+    Client
+        The Client initialized from `initializer` using the API key.
+    """
+
+    if use_env_variable():
+        return initialize_from_env(initializer)
+    else:
+        return initialize_from_key(initializer)

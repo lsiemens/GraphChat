@@ -11,6 +11,26 @@ import os
 logger = logging.getLogger(__name__)
 
 
+REPLY_TEXT = r"""
+### Model Response
+
+**Hello from the mock LLM!** This reply demonstrates common markdown elements used by LLMs.
+
+- **Bold text** and *italic text*
+- `inline code` and ```python\nprint("code block")\n```
+- A simple table:
+
+| Feature     | Supported |
+|-------------|-----------|
+| Bold        | Yes       |
+| Lists       | Yes       |
+| Tables      | Yes       |
+| Headers     | Yes       |
+
+> This is a blockquote for extra flavor.
+"""
+
+
 def use_MOCK_llm_sdk():
     return os.getenv("USE_MOCK_LLM_SDK", "0").lower() in ["true", "yes", "on", "1"]
 
@@ -60,7 +80,7 @@ class MOCK_Chat:
         self.messages.append(message)
 
     def sample(self):
-        return MOCK_Reply(f"MOCK: This reply comes from the MOCK LLM \"{self._model}\"")
+        return MOCK_Reply(f"{REPLY_TEXT}\n\nThis reply comes from the MOCK LLM \"{self._model}\"")
 
 
 class MOCK_Client:

@@ -1,7 +1,7 @@
 import { HTTPEngineAPI } from "./client-driver/api/HTTPEngineAPI"
 import { ClientInterfaceContext } from "./ui/context/ClientInterfaceContext"
 
-import { SplitView } from "./ui/components/layout/SplitView"
+import { SplitView } from "./ui/components/split-view/SplitView"
 import { Chat } from "./ui/components/chat/Chat"
 import { Graph } from "./ui/components/graph/Graph"
 import "./ClientGraphChat.css"

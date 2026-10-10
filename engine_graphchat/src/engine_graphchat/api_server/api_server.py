@@ -172,7 +172,7 @@ class GraphChatServer:
 if __name__ == "__main__":
     logger_config.configure("engine_graphchat", "api_server.log")
 
-    CORS_settings = (["http://localhost:5173"], [], ["content-type"], [], 600)
+    CORS_settings = (["http://localhost:5173", "http://localhost:4173"], [], ["content-type"], [], 600)
     engine = GraphChatServer(CORS_settings=CORS_settings)
 
     core = engine.process_HTTP

@@ -10,7 +10,7 @@ from engine_graphchat.core.api import pydantic_types
 
 
 _BASE_URL = "/api/v1"
-origins = ["http://localhost:5173"]
+origins = ["http://localhost:5173", "http://localhost:4173"]
 
 
 @contextlib.asynccontextmanager

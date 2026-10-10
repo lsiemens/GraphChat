@@ -4,23 +4,30 @@ import type { EngineAPI } from "./EngineAPI"
 import { apiToNode, apiFromPrompt, apiToNodeIDs, apiToModelNames, apiToViewNames, apiFromViewUpstream, apiToViewContext, apiToClientError } from "./APITypes"
 
 interface HTTPEngineAPIArgs {
-  host: string,
-  port: string,
+  host: string | null,
+  port: string | null,
   apiBase: string,
 }
 
 export class HTTPEngineAPI implements EngineAPI {
   private readonly API_URL;
 
-  constructor(args: HTTPEngineAPIArgs) {
-    const portPattern = /^[1-9]\d{0,4}$/;
-    if (!portPattern.test(args.port)) {
-      throw new ClientError("API initialization failed", `Invalid port \"${args.port}\", it must be a positive integer`);
+  constructor({ host, port, apiBase }: HTTPEngineAPIArgs) {
+    if ((host === null) || (port === null)) {
+      if ((host !== null) || (port !== null)) {
+        throw new ClientError("API initialization failed", "Invalid settings, either both host and port are null or they both must be strings.");
+      }
+      this.API_URL = apiBase;
+    } else {
+      const portPattern = /^[1-9]\d{0,4}$/;
+      if (!portPattern.test(port)) {
+        throw new ClientError("API initialization failed", `Invalid port \"${port}\", it must be a positive integer`);
+      }
+      if (Number(port) > 65535) {
+        throw new ClientError("API Initialization failed", `Invalid port \"${port}\", the maximum port number is 65535`);
+      }
+      this.API_URL = `${host}:${port}${apiBase}`;
     }
-    if (Number(args.port) > 65535) {
-      throw new ClientError("API Initialization failed", `Invalid port \"${args.port}\", the maximum port number is 65535`);
-    }
-    this.API_URL = `${args.host}:${args.port}${args.apiBase}`;
   }
 
   async sendPrompt(prompt: Prompt): Promise<Node> {

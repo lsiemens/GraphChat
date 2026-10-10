@@ -1,9 +1,9 @@
 :root {
-  --text: Black;
-  --text-h: Black;
-  --bg: WhiteSmoke;
+  --text: #0F0F0F;
+  --text-h: #0F0F0F;
+  --bg: #F0F0F0;
   --border: DarkGray;
-  --code-bg: WhiteSmoke;
+  --code-bg: #A0A0A0;
   --accent: DarkBlue;
   --accent-bg: LightBlue;
   --accent-border: SteelBlue;
@@ -34,11 +34,11 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: WhiteSmoke;
-    --text-h: WhiteSmoke;
-    --bg: Black;
+    --text: #F0F0F0;
+    --text-h: #F0F0F0;
+    --bg: #0F0F0F;
     --border: DarkGray;
-    --code-bg: Black;
+    --code-bg: #1F1F1F;
     --accent: LightBlue;
     --accent-bg: DarkBlue;
     --accent-border: SteelBlue;
