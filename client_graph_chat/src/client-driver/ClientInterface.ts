@@ -1,5 +1,6 @@
 import { type Status, ClientError } from "@/types"
 import { Prompt, Node, type NodeID, type ModelName, type ViewName } from "@/types"
+import { GraphLayout } from "@/utils/GraphLayout"
 import { ClientDriver } from "./ClientDriver"
 import type { EngineAPI } from "./api/EngineAPI"
 
@@ -16,6 +17,9 @@ export interface ClientState {
 
 export class ClientInterface {
   private clientDriver: ClientDriver;
+
+  /* utils */
+  public graphLayout = new GraphLayout();
 
   /* useSyncExternalStore ClientState */
   private clientStateSnapshot: ClientState | null = null;
@@ -69,6 +73,15 @@ export class ClientInterface {
   async submitPrompt(): Promise<void> {
     await this.clientDriver.submitPrompt();
     this.invalidateClientState();
+  }
+
+  public getLayout(promptID: string) {
+    const graph = {
+      prompt: this.clientDriver.prompt,
+      nodes: this.clientDriver.nodes,
+    };
+
+    return this.graphLayout.getLayout(promptID, graph);
   }
 
   async initialize(): Promise<void> {

@@ -18,13 +18,34 @@ function createEdge(sourceID: string, targetID: string, deletable: boolean): Edg
   };
 }
 
-function reconcileNodes(current: readonly GraphNode[], nodeIDs: ReadonlySet<NodeID>): GraphNode[] {
+function reconcileNodes(current: readonly GraphNode[], nodeIDs: ReadonlySet<NodeID>, state: ClientState, client: ClientInterface): GraphNode[] {
   const next = current.filter(node => (node.id === PROMPT_ID) || nodeIDs.has(toNodeID(node.id)));
+
+  const promptNode = current.find(item => item.id === PROMPT_ID)
+  const layout = client.getLayout(PROMPT_ID);
 
   const filteredIDs = new Set(next.map(node => node.id));
   for (const nodeID of nodeIDs) {
     if (!filteredIDs.has(fromNodeID(nodeID))) {
-      next.push(createDataNode({x:Math.random()*500, y:Math.random()*500}, nodeID));
+      let position = layout.get(fromNodeID(nodeID));
+      if (position === undefined) {
+        throw new Error("Layout undefined");
+      }
+
+      if (promptNode !== undefined) {
+        if (state.prompt.upstream.length === 1) {
+          const upstreamNodeId = state.prompt.upstream.at(0);
+          if (upstreamNodeId === nodeID) {
+            position = promptNode.position;
+            promptNode.position = {
+              x: position.x,
+              y: position.y + client.graphLayout.layerHeight,
+            };
+          }
+        }
+      }
+
+      next.push(createDataNode(position, nodeID));
     }
   }
   return next;
@@ -55,7 +76,7 @@ export function Graph() {
   const nodeIDs = state.nodeIDs;
 
   useEffect(() => {
-    setNodes(current => reconcileNodes(current, nodeIDs));
+    setNodes(current => reconcileNodes(current, nodeIDs, state, client));
     setEdges(() => reconcileEdges(nodeIDs, state, client));
   }, [nodeIDs, state, client, setNodes, setEdges]);
 
