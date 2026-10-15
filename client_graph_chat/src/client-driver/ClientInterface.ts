@@ -84,6 +84,10 @@ export class ClientInterface {
     return this.graphLayout.getLayout(promptID, graph);
   }
 
+  public getTotalCost(): number | null {
+    return this.clientDriver.totalCost;
+  }
+
   async initialize(): Promise<void> {
     await this.clientDriver.initialize();
     this.invalidateClientState();

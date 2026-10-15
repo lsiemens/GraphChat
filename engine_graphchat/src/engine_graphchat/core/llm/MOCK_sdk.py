@@ -5,6 +5,7 @@ a mock interface based on the xAI-SDK
 """
 
 import logging
+import random
 import os
 
 
@@ -29,6 +30,7 @@ REPLY_TEXT = r"""
 
 > This is a blockquote for extra flavor.
 """
+USE_COST = True
 
 
 def use_MOCK_llm_sdk():
@@ -63,8 +65,10 @@ class MOCK_Reply:
     def __init__(self, content, finish_reason="REASON_STOP"):
         self.content = content
         self.finish_reason = finish_reason
-        self.cost_usd = 0
+        self.cost_usd = None
         self.usage = MOCK_Usage()
+        if USE_COST:
+            self.cost_usd = random.random();
 
 
 class MOCK_Chat:

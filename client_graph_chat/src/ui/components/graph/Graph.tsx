@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { PROMPT_ID, NODE_TYPES, type GraphNode } from "./GraphNode"
 import { type NodeID, fromNodeID, toNodeID } from "@/types"
 import { ReactFlow, Background, MiniMap, useNodesState, useEdgesState, applyEdgeChanges } from "@xyflow/react"
@@ -18,19 +18,31 @@ function createEdge(sourceID: string, targetID: string, deletable: boolean): Edg
   };
 }
 
+function positionsFromLayout(client: ClientInterface): GraphNode[] {
+  const nodes: GraphNode[] = [];
+
+  const layout = client.getLayout(PROMPT_ID);
+  for (const [nodeID, position] of layout) {
+    if (nodeID === PROMPT_ID) {
+      nodes.push(createPromptNode(position));
+      continue;
+    }
+
+    nodes.push(createDataNode(position, toNodeID(nodeID)))
+  }
+
+  return nodes;
+}
+
 function reconcileNodes(current: readonly GraphNode[], nodeIDs: ReadonlySet<NodeID>, state: ClientState, client: ClientInterface): GraphNode[] {
   const next = current.filter(node => (node.id === PROMPT_ID) || nodeIDs.has(toNodeID(node.id)));
 
   const promptNode = current.find(item => item.id === PROMPT_ID)
-  const layout = client.getLayout(PROMPT_ID);
 
   const filteredIDs = new Set(next.map(node => node.id));
   for (const nodeID of nodeIDs) {
     if (!filteredIDs.has(fromNodeID(nodeID))) {
-      let position = layout.get(fromNodeID(nodeID));
-      if (position === undefined) {
-        throw new Error("Layout undefined");
-      }
+      let position = {x:0, y:0};
 
       if (promptNode !== undefined) {
         if (state.prompt.upstream.length === 1) {
@@ -70,12 +82,18 @@ function reconcileEdges(nodeIDs: ReadonlySet<NodeID>, state: ClientState, client
 export function Graph() {
   const { state, client } = useClient();
 
+  const [initializePositions, setInitializePositions] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState<GraphNode>([createPromptNode({x:0, y:0})]);
   const [edges, setEdges] = useEdgesState<Edge>([]);
 
   const nodeIDs = state.nodeIDs;
 
   useEffect(() => {
+    if (!initializePositions) {
+      setNodes(() => positionsFromLayout(client));
+      setInitializePositions(initializePositions => !initializePositions);
+    }
+
     setNodes(current => reconcileNodes(current, nodeIDs, state, client));
     setEdges(() => reconcileEdges(nodeIDs, state, client));
   }, [nodeIDs, state, client, setNodes, setEdges]);
@@ -115,6 +133,12 @@ export function Graph() {
     setEdges(current => applyEdgeChanges(changes, current));
   }, [edges, setEdges, state, client]);
 
+  const onAutoLayout = useCallback(() => {
+    setNodes(() => positionsFromLayout(client));
+  }, [client]);
+
+  const showCost = (client.getTotalCost() !== null);
+  const cost = client.getTotalCost()?.toFixed(4);
 
   return (
     <div className={styles["graph"]}>
@@ -132,8 +156,15 @@ export function Graph() {
             <Background />
           </ReactFlow>
         </div>
+
         <div className={styles["graph-info"]}>
-          INFO BAR
+
+          {showCost && (
+            <>Total Cost: ${cost}</>
+          )}
+          <button type="button" onClick={onAutoLayout}>
+            Auto Layout
+          </button>
         </div>
       </div>
     </div>

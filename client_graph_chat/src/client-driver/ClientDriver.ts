@@ -10,6 +10,7 @@ export class ClientDriver {
   public models: ModelName[];
   public views: ViewName[];
   public status: readonly Status[];
+  public totalCost: number | null;
 
   constructor(api: EngineAPI) {
     this.api = api;
@@ -19,6 +20,7 @@ export class ClientDriver {
     this.prompt = new Prompt({model: null, upstream:[], context:[], content:""});
     this.nodes = new Map<NodeID, Node>();
     this.status = [];
+    this.totalCost = null;
 
     this.pushStatus({
       message:"Uninitialized",
@@ -28,6 +30,7 @@ export class ClientDriver {
 
   async initialize(): Promise<void> {
     let failedInitialization = false;
+    this.totalCost = 0;
 
     try {
       this.models = await this.api.getModels();
@@ -70,8 +73,8 @@ export class ClientDriver {
       if (this.views.length === 0) {
         failedInitialization = true;
         this.pushStatus({
-          message:"No views found",
-          details:"",
+          message: "No views found",
+          details: "",
         });
         console.error("Failed to initialize ClientDriver: The views list is empty.")
       }
@@ -89,6 +92,13 @@ export class ClientDriver {
       const nodeIDs = await this.api.getNodeIDs();
       for (const nodeID of nodeIDs) {
         const node = await this.api.getNode(nodeID);
+        if ((this.totalCost !== null) && (!this.nodes.has(node.id))) {
+          if (node.costUSD !== null) {
+            this.totalCost += node.costUSD;
+          } else {
+            this.totalCost = null;
+          }
+        }
 
         this.nodes.set(nodeID, node);
       }
@@ -113,6 +123,14 @@ export class ClientDriver {
   async submitPrompt(): Promise<void> {
     try {
       const node = await this.api.sendPrompt(this.prompt);
+      if ((this.totalCost !== null) && (!this.nodes.has(node.id))) {
+        if (node.costUSD !== null) {
+          this.totalCost += node.costUSD;
+        } else {
+          this.totalCost = null;
+        }
+      }
+
       this.nodes.set(node.id, node);
       this.prompt = new Prompt({model: node.model, upstream:[node.id], context:[...node.context, node.id], content:""});
       this.clearStatus();
