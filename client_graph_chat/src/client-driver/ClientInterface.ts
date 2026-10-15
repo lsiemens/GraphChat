@@ -40,6 +40,17 @@ export class ClientInterface {
     this.updatePrompt(newPrompt);
   }
 
+  public updatePromptModel(model: ModelName): void {
+    const prompt = this.getClientStateSnapshot().prompt;
+    const newPrompt = new Prompt({
+      model: model,
+      upstream: prompt.upstream,
+      context: prompt.context,
+      content: prompt.content,
+    });
+    this.updatePrompt(newPrompt);
+  }
+
   async updatePromptUpstream(upstream: NodeID[]): Promise<void> {
     const clientState = this.getClientStateSnapshot();
     const prompt = clientState.prompt;

@@ -1,5 +1,5 @@
 import { useState, useRef } from "react"
-import { Prompt } from  "@/types"
+import { fromModelName, toModelName } from  "@/types"
 import { useClient } from "@/ui/hooks/useClient"
 import styles from "./ChatInput.module.css"
 
@@ -32,24 +32,13 @@ export function ChatInput() {
     }
   }
 
-  function onChange(event: React.ChangeEvent<HTMLTextAreaElement>): void {
-    const prompt = state.prompt;
-    const newPrompt = new Prompt({
-        model: prompt.model,
-        upstream: prompt.upstream,
-        context: prompt.context,
-        content: event.target.value,
-    });
-    client.updatePrompt(newPrompt);
-  }
-
   return (
     <div className={styles["input"]}>
       <div className={styles["textarea"]}>
         <textarea
           ref={textareaRef}
           value={state.prompt.content}
-          onChange={onChange}
+          onChange={(event) => client.updatePromptContent(event.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Ask anything"
           rows={3}
@@ -58,9 +47,17 @@ export function ChatInput() {
       </div>
 
       <div className={styles["controls"]}>
-        <button type="button" disabled={disabled}>
-          Settings 
-        </button>
+        {(state.prompt.model !== null) && (
+          <select id="models"
+            value={fromModelName(state.prompt.model)}
+            onChange={(event) => client.updatePromptModel(toModelName(event.target.value))}
+            disabled={disabled}
+          >
+            {state.models.map((model) => (
+              <option key={model} value={fromModelName(model)}>{fromModelName(model)}</option>
+            ))}
+          </select>
+        )}
         <button type="button" onClick={handleSubmit} disabled={isEmpty || disabled}>
           Send
         </button>
