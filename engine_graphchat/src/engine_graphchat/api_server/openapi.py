@@ -34,8 +34,8 @@ def object_schema(schema_name, properties):
     }
 
 
-def json_response_schema(schema_name, type_ref, description):
-    return {
+def json_response_schema(schema_name, type_ref, description, **kwargs):
+    data = {
         schema_name: {
             "description": description,
             "content": {
@@ -45,6 +45,12 @@ def json_response_schema(schema_name, type_ref, description):
             },
         },
     }
+
+    if "links" in kwargs:
+        links = kwargs["links"]
+        if len(links.keys()) > 0:
+            data[schema_name]["links"] = links
+    return data
 
 
 def json_request_schema(schema_name, type_ref, description):
@@ -71,6 +77,28 @@ def parameter_schema(schema_name, parameter_name, type_ref, description):
             "schema": ref(type_ref),
         },
     }
+
+
+# TODO
+def link_schema(link_name, operationId, **kwargs):
+    data = {
+        link_name: {
+            "operationId": operationId,
+        },
+    }
+
+    if "parameters" in kwargs:
+        parameters = kwargs["parameters"]
+        if len(parameters.keys()) > 0:
+            data[link_name]["parameters"] = parameters
+
+    if "requestBody" in kwargs:
+        request_body = kwargs["requestBody"]
+        data[link_name]["requestBody"] = request_body
+
+    if len(data[link_name].keys() < 2):
+        raise exceptions.ContentError("At least one of \"parameters\" or \"requestBody\" should be defined")
+    return data
 
 
 def http_method(method, operationId, responses_type_ref, **kwargs):
@@ -218,6 +246,10 @@ PARAMETERS = {
 REQUESTBODIES = {
     **json_request_schema("PromptAPI", "PromptAPI", "Prompt for the LLM including configuration and context"),
     **json_request_schema("ViewUpstreamAPI", "ViewUpstreamAPI", "The upstream used to calculate a valid context with a given view method"),
+}
+
+LINKS = {
+#    **link_schema(),
 }
 
 

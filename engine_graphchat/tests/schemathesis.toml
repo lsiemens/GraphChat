@@ -11,8 +11,10 @@ include-name = "POST /graphs/0/views/{view_name}"
 parameters = { view_name = "simple_dfs" }
 
 [phases]
-#fuzzing.enabled = false
-stateful.enabled = false
+examples.enabled = true
+coverage.enabled = true
+fuzzing.enabled = true
+stateful.enabled = true
 
 [reports.junit]
 enabled = true
