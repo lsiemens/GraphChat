@@ -57,13 +57,6 @@ def add_NodeData(cursor, nodeData):
 
     upstream = nodeData.upstream
     context = nodeData.request.context
-    data_usage = {
-        "cached_prompt_text_tokens": usage.cached_prompt_text_tokens,
-        "prompt_tokens": usage.prompt_tokens,
-        "reasoning_tokens": usage.reasoning_tokens,
-        "completion_tokens": usage.completion_tokens,
-        "cost_usd": usage.cost_USD}
-
     data = {
         "node_id": nodeData.id,
         "request_timestamp": nodeData.request.timestamp,
@@ -71,11 +64,15 @@ def add_NodeData(cursor, nodeData):
         "reply_timestamp": nodeData.reply.timestamp,
         "reply": nodeData.reply.content,
         "model": nodeData.model,
-        "usage": data_usage}
+        "cached_prompt_text_tokens": usage.cached_prompt_text_tokens,
+        "prompt_tokens": usage.prompt_tokens,
+        "reasoning_tokens": usage.reasoning_tokens,
+        "completion_tokens": usage.completion_tokens,
+        "cost_usd": usage.cost_USD}
 
     _insert_nodes(cursor, data)
-    _insert_nodes_upstream(cursor, upstream)
-    _insert_nodes_context(cursor, context)
+    _insert_nodes_upstream(cursor, nodeData.id, upstream)
+    _insert_nodes_context(cursor, nodeData.id, context)
 
 
 def _select_nodes(cursor, node_id):
@@ -92,7 +89,19 @@ def _select_nodes(cursor, node_id):
 def _insert_nodes(cursor, data):
     cursor.execute(f"""
         INSERT INTO {SCHEMA}.nodes (node_id, request_timestamp, request, reply_timestamp, reply, model, usage)
-            VALUES (%(node_id)s, %(request_timestamp)s, %(request)s, %(reply_timestamp)s, %(reply)s, %(model)s, %(usage)s)""", data)
+            VALUES (
+                %(node_id)s,
+                %(request_timestamp)s,
+                %(request)s,
+                %(reply_timestamp)s,
+                %(reply)s,
+                %(model)s,
+                ROW(
+                    %(cached_prompt_text_tokens)s,
+                    %(prompt_tokens)s,
+                    %(reasoning_tokens)s,
+                    %(completion_tokens)s,
+                    %(cost_usd)s))""", data)
 
 
 def _select_nodes_context(cursor, node_id):

@@ -4,6 +4,7 @@ import uvicorn
 
 def dev():
     os.environ["USE_MOCK_LLM_SDK"] = "YES"
+    os.environ["USE_DATABASE"] = "YES"
 
     uvicorn.run("engine_graphchat.api_server.fastAPI_server:api",
                 host="127.0.0.1",
@@ -14,6 +15,7 @@ def dev():
 
 def serve():
     os.environ["USE_MOCK_LLM_SDK"] = "NO"
+    os.environ["USE_DATABASE"] = "YES"
 
     uvicorn.run("engine_graphchat.api_server.fastAPI_server:api",
                 host="0.0.0.0",

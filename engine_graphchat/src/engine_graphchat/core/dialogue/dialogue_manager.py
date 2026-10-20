@@ -3,15 +3,21 @@ Manage the dialogue between the user and LLM agent
 """
 
 import logging
+import os
 
 from engine_graphchat.core import exceptions
 from engine_graphchat.core.dag import graph
 from engine_graphchat.core.dag import utils as graph_utils
 from engine_graphchat.core.llm import llm_service
 from engine_graphchat.core.llm import utils as llm_utils
+from engine_graphchat.core.database import database_service
 
 
 logger = logging.getLogger(__name__)
+
+
+def use_database():
+    return os.getenv("USE_DATABASE", "0").lower() in ["true", "yes", "on", "1"]
 
 
 class DialogueManager:
@@ -22,7 +28,13 @@ class DialogueManager:
     """
 
     def __init__(self, model_name):
-        self.graph = graph.Graph()
+        self.database_service = None
+        nodes = {}
+        if use_database():
+            self.database_service = database_service.DatabaseService()
+            nodes = self.database_service.get_graph()
+
+        self.graph = graph.Graph(nodes)
         self.llm_service = llm_service.LLM_Service()
         self._chat = None
 
@@ -58,6 +70,9 @@ class DialogueManager:
         upstream = [node_data.id]
         context = node_data.request.context + [node_data.id]
         self.set_context(upstream, context)
+
+        if self.database_service is not None:
+            self.database_service.add_NodeData(node_data)
 
         return node_data
 

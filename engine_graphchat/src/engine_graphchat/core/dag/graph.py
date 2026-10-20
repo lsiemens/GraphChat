@@ -14,8 +14,8 @@ class Graph:
     nodes in the graph then after the addition the graph will still be a DAG.
     """
 
-    def __init__(self):
-        self.nodes = {}
+    def __init__(self, nodes={}):
+        self.nodes = nodes
         self.views = {"simple_dfs": self.topological_ordering}
 
     def add_node(self, node):

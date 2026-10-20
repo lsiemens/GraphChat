@@ -8,6 +8,7 @@ echo "To use fastAPI instead run the command 'uv run dev'!"
 echo
 
 export USE_MOCK_LLM_SDK=TRUE
+export USE_DATABASE=TRUE
 export ENGINE_GRAPHCHAT_SERVICE=TRUE
 export XAI_API_KEY=
 export PYTHONPATH="$PROJECT_DIR/src${PYTHONPATH:+:${PYTHONPATH:-}}"

@@ -12,6 +12,10 @@ class DatabaseService:
 
         self._initialize_composite_types()
 
+    def get_graph(self, graph_id=None):
+        node_ids = self.get_node_ids(graph_id)
+        return {node_id: self.get_NodeData(node_id) for node_id in node_ids}
+
     def get_node_ids(self, graph_id=None):
         with self.get_connection() as connection:
             with connection.cursor() as cursor:

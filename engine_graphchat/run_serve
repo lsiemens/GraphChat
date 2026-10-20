@@ -7,6 +7,7 @@ echo "Running 'engine_graphchat' using a custom (insecure and unstable) http ser
 echo "To use fastAPI instead run the command 'uv run serve'!"
 echo
 
+export USE_DATABASE=TRUE
 export PYTHONPATH="$PROJECT_DIR/src${PYTHONPATH:+:${PYTHONPATH:-}}"
 
 python -m engine_graphchat.api_server.api_server
